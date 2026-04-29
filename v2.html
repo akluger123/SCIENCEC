@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>UV DNA Damage & Repair – Interactive Simulation</title>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --card: #111827;
+    --card2: #1f2937;
+    --border: #2d3748;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --uv: #a78bfa;
+    --sun: #fbbf24;
+    --repair: #34d399;
+    --danger: #f87171;
+    --dna: #60a5fa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+  /* ── STICKY NAV ── */
+  nav{
+    position:sticky;top:0;z-index:200;
+    background:rgba(10,15,30,.92);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:6px;
+    padding:10px 20px;flex-wrap:wrap;
+  }
+  nav .logo{font-weight:800;font-size:1rem;color:var(--uv);margin-right:10px;white-space:nowrap;}
+  .nav-btn{
+    padding:6px 14px;border-radius:99px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-size:.8rem;font-weight:600;
+    transition:all .2s;white-space:nowrap;
+  }
+  .nav-btn:hover,.nav-btn.active{background:var(--uv);border-color:var(--uv);color:#fff;}
+  .progress-wrap{margin-left:auto;display:flex;align-items:center;gap:8px;}
+  .prog-track{width:100px;height:6px;background:var(--border);border-radius:99px;overflow:hidden;}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--uv),var(--accent));border-radius:99px;transition:width .4s;}
+  .prog-txt{font-size:.75rem;color:var(--accent);font-weight:700;}
+
+  /* ── HERO ── */
+  .hero{
+    min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:60px 20px;text-align:center;position:relative;overflow:hidden;
+  }
+  .hero-bg{
+    position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(124,58,237,.3) 0%,transparent 70%),
+               radial-gradient(ellipse 60% 40% at 80% 80%,rgba(56,189,248,.15) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .dna-float{position:absolute;opacity:.07;font-size:12rem;top:-20px;right:-40px;transform:rotate(20deg);user-select:none;}
+  .hero h1{
+    font-size:clamp(2rem,5vw,3.5rem);font-weight:900;line-height:1.1;margin-bottom:16px;
+    background:linear-gradient(135deg,#c4b5fd,#38bdf8,#34d399);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .hero p{font-size:clamp(.95rem,2vw,1.15rem);color:var(--muted);max-width:640px;margin:0 auto 32px;line-height:1.7;}
+  .hero-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:36px;}
+  .hbadge{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:99px;padding:6px 16px;font-size:.85rem;color:var(--accent);}
+  .start-btn{
+    padding:14px 36px;border-radius:99px;border:none;
+    background:linear-gradient(135deg,#7c3aed,#2563eb);
+    color:#fff;font-size:1.05rem;font-weight:700;cursor:pointer;
+    box-shadow:0 6px 30px rgba(124,58,237,.45);transition:all .25s;
+  }
+  .start-btn:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(124,58,237,.6);}
+  .scroll-hint{margin-top:40px;color:var(--muted);font-size:.85rem;animation:bob 2s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}
+
+  /* ── SECTIONS ── */
+  section{max-width:1000px;margin:0 auto;padding:60px 20px;}
+  .section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:0 20px;}
+
+  /* ── STEP HEADER ── */
+  .step-header{
+    display:flex;align-items:flex-start;gap:20px;margin-bottom:32px;
+    padding:28px;border-radius:16px;
+  }
+  .sh-s1{background:linear-gradient(135deg,rgba(124,58,237,.25),rgba(30,27,75,.6));}
+  .sh-s2{background:linear-gradient(135deg,rgba(37,99,235,.25),rgba(15,30,80,.6));}
+  .sh-s3{background:linear-gradient(135deg,rgba(5,150,105,.25),rgba(6,50,40,.6));}
+  .sh-s4{background:linear-gradient(135deg,rgba(220,38,38,.25),rgba(60,10,10,.6));}
+  .sh-s5{background:linear-gradient(135deg,rgba(56,189,248,.2),rgba(10,30,50,.6));}
+  .step-num{
+    width:56px;height:56px;border-radius:14px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:1.6rem;
+    background:rgba(255,255,255,.1);
+  }
+  .step-header h2{font-size:1.4rem;font-weight:800;margin-bottom:6px;}
+  .step-header p{color:var(--muted);font-size:.92rem;line-height:1.6;}
+
+  /* ── INFO CARDS ── */
+  .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:32px;}
+  .info-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:20px;position:relative;overflow:hidden;
+  }
+  .info-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+  .ic-uv::before{background:linear-gradient(90deg,var(--uv),var(--accent));}
+  .ic-dna::before{background:linear-gradient(90deg,var(--dna),var(--uv));}
+  .ic-repair::before{background:linear-gradient(90deg,var(--repair),var(--accent));}
+  .ic-danger::before{background:linear-gradient(90deg,var(--danger),#f59e0b);}
+  .info-card h3{font-size:1rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .info-card p,.info-card li{font-size:.88rem;color:var(--muted);line-height:1.65;}
+  .info-card ul{padding-left:16px;}
+  .info-card li{margin-bottom:4px;}
+
+  /* ── DIAGRAM BOXES ── */
+  .diagram-box{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:24px;margin-bottom:24px;
+  }
+  .diagram-box h3{font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .diagram-img{width:100%;border-radius:10px;display:block;}
+
+  /* ── NER STEPS ── */
+  .ner-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+  .ner-step{
+    background:var(--card2);border:1px solid var(--border);border-radius:12px;
+    padding:18px;position:relative;
+  }
+  .ner-step-num{
+    width:32px;height:32px;border-radius:50%;background:var(--repair);
+    color:#fff;font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center;
+    margin-bottom:10px;
+  }
+  .ner-step h4{font-size:.95rem;font-weight:700;color:var(--repair);margin-bottom:6px;}
+  .ner-step .enzyme{font-size:.78rem;background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);border-radius:6px;padding:2px 8px;color:var(--repair);display:inline-block;margin-bottom:8px;}
+  .ner-step p{font-size:.83rem;color:var(--muted);line-height:1.55;}
+  .ner-arrow{display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--repair);padding:0 4px;}
+
+  /* ── PATHWAY FLOW ── */
+  .pathway{display:flex;flex-wrap:wrap;gap:0;align-items:center;margin:16px 0 24px;}
+  .pw-step{
+    background:var(--card2);border:1px solid var(--border);border-radius:10px;
+    padding:10px 14px;font-size:.82rem;text-align:center;min-width:90px;flex:1;
+  }
+  .pw-step .icon{font-size:1.3rem;display:block;margin-bottom:4px;}
+  .pw-step .label{color:var(--muted);font-size:.72rem;}
+  .pw-arrow{font-size:1.2rem;color:var(--border);padding:0 4px;flex-shrink:0;}
+
+  /* ── SEESAW SVG ── */
+  .seesaw-container{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px;text-align:center;}
+  .seesaw-container h3{font-size:1rem;font-weight:700;color:var(--accent);margin-bottom:16px;}
+
+  /* ── QUESTION SECTION ── */
+  .q-section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-top:16px;}
+  .q-section h3{font-size:1rem;font-weight:700;color:var(--uv);margin-bottom:20px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .q-block{margin-bottom:22px;}
+  .q-block:last-child{margin-bottom:0;}
+  .q-num{display:inline-block;background:var(--uv);color:#fff;font-size:.72rem;font-weight:700;border-radius:6px;padding:2px 8px;margin-bottom:8px;letter-spacing:.05em;}
+  .q-block p{font-size:.93rem;line-height:1.65;margin-bottom:10px;}
+  .q-block .hint{font-size:.82rem;color:var(--muted);font-style:italic;background:rgba(56,189,248,.06);border-left:2px solid var(--accent);padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:10px;}
+  textarea{
+    width:100%;background:var(--card2);border:1.5px solid var(--border);border-radius:10px;
+    color:var(--text);font-family:inherit;font-size:.9rem;padding:12px 14px;
+    resize:vertical;min-height:80px;outline:none;transition:border-color .2s,box-shadow .2s;line-height:1.6;
+  }
+  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,189,248,.1);}
+  textarea.filled{border-color:var(--repair);}
+
+  /* ── NER TABLE ── */
+  .ner-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:10px 0 16px;}
+  .ner-table th{background:rgba(52,211,153,.1);color:var(--repair);padding:10px 12px;text-align:left;border-bottom:2px solid var(--border);font-weight:700;}
+  .ner-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;}
+  .ner-table tr:last-child td{border-bottom:none;}
+  .ner-table .phase{color:var(--repair);font-weight:700;}
+  .ner-table input{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.85rem;padding:6px 10px;outline:none;font-family:inherit;transition:border-color .2s;}
+  .ner-table input:focus{border-color:var(--repair);}
+
+  /* ── SKETCH ── */
+  .sketch-wrap{margin-top:8px;}
+  canvas{background:#1a2235;border-radius:10px;cursor:crosshair;display:block;width:100%;touch-action:none;}
+  .sketch-ctrl{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;}
+  .sketch-ctrl button{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:var(--card2);color:var(--text);cursor:pointer;font-size:.8rem;transition:background .15s;}
+  .sketch-ctrl button:hover{background:var(--border);}
+  .cbtn{width:26px;height:26px;border-radius:50%!important;padding:0!important;cursor:pointer;border:2px solid rgba(255,255,255,.3)!important;}
+
+  /* ── VOCAB ── */
+  .vocab-chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 16px;}
+  .chip{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.35);border-radius:99px;padding:5px 13px;font-size:.8rem;color:#c4b5fd;cursor:pointer;user-select:none;transition:all .15s;}
+  .chip:hover{background:rgba(124,58,237,.3);}
+  .chip.used{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.4);color:var(--repair);text-decoration:line-through;}
+
+  /* ── COMPLETE ── */
+  .complete{background:linear-gradient(135deg,var(--card),#1a2744);border:1px solid var(--border);border-radius:20px;padding:50px 30px;text-align:center;max-width:600px;margin:40px auto;}
+  .complete .trophy{font-size:5rem;margin-bottom:20px;}
+  .complete h2{font-size:2rem;font-weight:900;background:linear-gradient(90deg,#a78bfa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;}
+  .complete p{color:var(--muted);margin-bottom:28px;font-size:1rem;}
+  .stats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:28px;}
+  .stat{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;padding:14px 22px;min-width:100px;}
+  .stat .n{font-size:2rem;font-weight:900;color:var(--accent);}
+  .stat .l{font-size:.75rem;color:var(--muted);}
+  .print-btn{background:linear-gradient(90deg,#059669,#0891b2);color:#fff;border:none;padding:13px 32px;border-radius:99px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(5,150,105,.35);transition:all .2s;}
+  .print-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(5,150,105,.5);}
+
+  /* ── KEYFRAME ANIMATIONS ── */
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+  .animate-in{animation:slideIn .4s ease forwards;}
+
+  /* ── PRINT ── */
+  @media print{
+    nav,.start-btn,.sketch-ctrl,.print-btn,#heroSection{display:none!important;}
+    body{background:#fff;color:#000;}
+    .info-card,.diagram-box,.q-section,.ner-step,.seesaw-container{border:1px solid #ccc;background:#fff;}
+    textarea,.ner-table input{border:1px solid #ccc;background:#f9f9f9;color:#000;}
+    canvas{border:1px solid #ccc;}
+  }
+  @media(max-width:600px){
+    .ner-steps{grid-template-columns:1fr;}
+    .pathway{gap:4px;}
+    .pw-arrow{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <span class="logo">🧬 UV DNA Sim</span>
+  <button class="nav-btn active" onclick="scrollTo('heroSection')">Home</button>
+  <button class="nav-btn" onclick="scrollTo('step1')">Step 1</button>
+  <button class="nav-btn" onclick="scrollTo('step2')">Step 2</button>
+  <button class="nav-btn" onclick="scrollTo('step3')">Step 3</button>
+  <button class="nav-btn" onclick="scrollTo('step4')">Step 4</button>
+  <button class="nav-btn" onclick="scrollTo('synthesis')">Synthesis</button>
+  <div class="progress-wrap">
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <span class="prog-txt" id="progTxt">0%</span>
+  </div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<div id="heroSection" class="hero">
+  <div class="hero-bg"></div>
+  <div class="dna-float">🧬</div>
+  <h1>UV DNA Damage<br>&amp; Repair</h1>
+  <p>An interactive simulation investigation exploring how UV-B radiation creates thymine dimers, blocks transcription, and how cells use Nucleotide Excision Repair to fix the damage — and what happens when repair fails.</p>
+  <div class="hero-badges">
+    <span class="hbadge">☀️ UV-B Radiation</span>
+    <span class="hbadge">🧬 Thymine Dimers</span>
+    <span class="hbadge">🔧 NER Repair</span>
+    <span class="hbadge">⚖️ Cancer Risk</span>
+    <span class="hbadge">📝 18 Questions</span>
+  </div>
+  <button class="start-btn" onclick="scrollTo('step1')">▶ Start Simulation</button>
+  <p class="scroll-hint">↓ Scroll to begin</p>
+</div>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════
+     STEP 1: UV RADIATION & THYMINE DIMER
+════════════════════════════════════════ -->
+<section id="step1">
+  <div class="step-header sh-s1 animate-in">
+    <div class="step-num">☀️</div>
+    <div>
+      <h2>Step 1: UV Radiation Creates a Thymine Dimer</h2>
+      <p>UV-B radiation from the sun penetrates the skin and strikes DNA, causing adjacent thymine bases to fuse into an abnormal structure called a thymine dimer — distorting the double helix.</p>
+    </div>
+  </div>
+
+  <!-- MAIN DIAGRAM IMAGE -->
+  <div class="diagram-box">
+    <h3>📸 Simulation Diagram — UV-B Striking DNA</h3>
+    <img class="diagram-img" src="https://lqaitnsphcretimgxxdz.supabase.co/storage/v1/object/sign/generated-images/7b0bf1a7-c748-4d5c-a768-a2f4a1ec4e0a/2026-04-29T19-13-38-416Z-8a8c2e5c-8cac-4c36-9b0d-0bbc6c5fc1f8.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lMjMyNzgzMy0zNWI4LTRkNGItYTVmOS00M2FmZjY3YTJlMmQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJnZW5lcmF0ZWQtaW1hZ2VzLzdiMGJmMWE3LWM3NDgtNGQzYy1hNzY4LWE0MmExZWMwYTBjMi8yMDI2LTA0LTI5VDE5LTEzLTM4LTQxNlotOGE4YzJlNWMtOGNhYy00YzM2LTliMGQtMGJiYzZjNWZjMThiLnBuZyIsImlhdCI6MTc3NzQ5MDA1MCwiZXhwIjoxNzc3NDkzNjUwfQ.placeholder" alt="UV-B hitting DNA diagram" onerror="this.style.display='none';document.getElementById('svgDna').style.display='block'"/>
+    <!-- INLINE SVG FALLBACK / SUPPLEMENT -->
+    <svg id="svgDna" viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#0f172a;">
+      <defs>
+        <radialGradient id="uvGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#a78bfa" stop-opacity=".8"/>
+          <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <!-- UV rays -->
+      <line x1="60" y1="20" x2="280" y2="140" stroke="#a78bfa" stroke-width="3" opacity=".8" filter="url(#glow)"/>
+      <line x1="30" y1="50" x2="260" y2="155" stroke="#c4b5fd" stroke-width="2" opacity=".6"/>
+      <line x1="90" y1="10" x2="295" y2="130" stroke="#818cf8" stroke-width="2" opacity=".5"/>
+      <polygon points="270,138 285,128 290,148" fill="#a78bfa"/>
+      <text x="40" y="80" fill="#c4b5fd" font-size="13" font-weight="bold">UV-B Radiation</text>
+      <text x="35" y="96" fill="#94a3b8" font-size="10">(from the sun)</text>
+      <!-- DNA backbone left -->
+      <path d="M300,20 C330,60 270,100 300,140 C330,180 270,220 300,260 C330,300 270,340 300,380" stroke="#60a5fa" stroke-width="4" fill="none" opacity=".8"/>
+      <!-- DNA backbone right -->
+      <path d="M420,20 C390,60 450,100 420,140 C390,180 450,220 420,260 C390,300 450,340 420,380" stroke="#818cf8" stroke-width="4" fill="none" opacity=".8"/>
+      <!-- Base pairs -->
+      <line x1="305" y1="50" x2="415" y2="50" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+      <line x1="290" y1="90" x2="410" y2="90" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+      <!-- Thymine pair (damage site) -->
+      <line x1="285" y1="135" x2="415" y2="135" stroke="#fbbf24" stroke-width="4" opacity=".4"/>
+      <ellipse cx="305" cy="135" rx="14" ry="10" fill="#f59e0b" opacity=".9" filter="url(#glow)"/>
+      <ellipse cx="330" cy="135" rx="14" ry="10" fill="#f59e0b" opacity=".9" filter="url(#glow)"/>
+      <path d="M316,130 Q318,135 316,140" stroke="#ef4444" stroke-width="2.5" fill="none"/>
+      <text x="290" y="165" fill="#fbbf24" font-size="11" font-weight="bold">Thymine Dimer</text>
+      <text x="282" y="178" fill="#94a3b8" font-size="9">(abnormal covalent bond)</text>
+      <!-- Bulge arrow -->
+      <path d="M260,135 Q240,135 245,115" stroke="#ef4444" stroke-width="1.5" fill="none" stroke-dasharray="4,3"/>
+      <text x="190" y="112" fill="#f87171" font-size="10">Helix distortion</text>
+      <!-- More base pairs -->
+      <line x1="310" y1="180" x2="410" y2="180" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+      <line x1="300" y1="220" x2="420" y2="220" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+      <line x1="310" y1="260" x2="410" y2="260" stroke="#38bdf8" stroke-width="3" opacity=".7"/>
+      <!-- Labels -->
+      <text x="430" y="55" fill="#94a3b8" font-size="10">Normal base pair</text>
+      <text x="430" y="140" fill="#fbbf24" font-size="10">T — T fused</text>
+      <text x="340" y="30" fill="#60a5fa" font-size="12" font-weight="bold">DNA Double Helix</text>
+      <!-- Inset -->
+      <rect x="490" y="180" width="190" height="110" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+      <text x="585" y="200" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="bold">Zoom: Thymine Dimer</text>
+      <ellipse cx="545" cy="235" rx="18" ry="13" fill="#3b82f6" opacity=".8"/>
+      <text x="545" y="239" text-anchor="middle" fill="#fff" font-size="9">T</text>
+      <ellipse cx="580" cy="235" rx="18" ry="13" fill="#3b82f6" opacity=".8"/>
+      <text x="580" y="239" text-anchor="middle" fill="#fff" font-size="9">T</text>
+      <line x1="563" y1="235" x2="562" y2="235" stroke="#ef4444" stroke-width="3"/>
+      <path d="M545,248 Q562,258 580,248" stroke="#ef4444" stroke-width="2" fill="none"/>
+      <text x="562" y="270" text-anchor="middle" fill="#f87171" font-size="9">Abnormal bond</text>
+      <ellipse cx="645" cy="235" rx="18" ry="13" fill="#1e3a5f" stroke="#60a5fa" stroke-width="1.5" opacity=".6"/>
+      <text x="645" y="239" text-anchor="middle" fill="#94a3b8" font-size="9">T</text>
+      <text x="645" y="255" text-anchor="middle" fill="#94a3b8" font-size="8">Normal</text>
+      <text x="562" y="285" text-anchor="middle" fill="#fbbf24" font-size="9">"Snowman" fused structure</text>
+    </svg>
+  </div>
+
+  <!-- INFO CARDS -->
+  <div class="info-grid">
+    <div class="info-card ic-uv">
+      <h3>☀️ What is UV-B?</h3>
+      <p>UV-B (280–315 nm wavelength) is a form of ultraviolet radiation emitted by the <strong>sun</strong>. It penetrates the outer skin layers and is energetic enough to be absorbed directly by DNA bases. UV-A also reaches Earth but UV-B is the primary cause of direct DNA damage.</p>
+    </div>
+    <div class="info-card ic-dna">
+      <h3>🔗 The Thymine Dimer</h3>
+      <p>When two adjacent <strong>thymine (T) bases</strong> on the same DNA strand absorb UV-B energy, they form an abnormal <strong>covalent bond</strong> between them — fusing into a single unit called a <em>cyclobutane pyrimidine dimer (CPD)</em>. This is sometimes called a "snowman" structure.</p>
+    </div>
+    <div class="info-card ic-danger">
+      <h3>🌀 Helix Distortion</h3>
+      <p>The fused dimer <strong>bulges outward</strong>, bending and distorting the double helix. This physical kink disrupts the normal base-pairing geometry, making it impossible for enzymes to read the DNA sequence correctly at that location.</p>
+    </div>
+  </div>
+
+  <!-- SKETCH QUESTION -->
+  <div class="q-section">
+    <h3>📝 Step 1 Questions</h3>
+    <div class="q-block">
+      <span class="q-num">Q1</span>
+      <p>What type of UV radiation penetrates the skin and damages DNA? Where does this radiation come from?</p>
+      <textarea id="q1" placeholder="Type your answer here…" rows="3"></textarea>
+    </div>
+    <div class="q-block">
+      <span class="q-num">Q2</span>
+      <p>Describe what happens to the two thymine bases when they absorb UV-B energy. What structure forms?</p>
+      <textarea id="q2" placeholder="Type your answer here…" rows="3"></textarea>
+    </div>
+    <div class="q-block">
+      <span class="q-num">Q3</span>
+      <p>Look at the DNA double helix before and after the dimer forms. How does the physical shape of the helix change? Why might this matter?</p>
+      <textarea id="q3" placeholder="Type your answer here…" rows="4"></textarea>
+    </div>
+    <div class="q-block">
+      <span class="q-num">Q4</span>
+      <p>The simulation shows the thymine dimer as a "snowman-like" fused structure. <strong>Sketch the dimer below</strong> and label: the two thymine bases, the abnormal bond between them, and the distortion (bulge) in the helix.</p>
+      <div class="sketch-wrap">
+        <p style="font-size:.82rem;color:var(--muted);margin-bottom:6px">Draw on the canvas — click &amp; drag to sketch:</p>
+        <canvas id="sketchCanvas" width="800" height="260"></canvas>
+        <div class="sketch-ctrl">
+          <button onclick="clearCanvas()">🗑 Clear</button>
+          <button onclick="undoCanvas()">↩ Undo</button>
+          <input type="range" id="brushSize" min="1" max="18" value="3" style="width:70px" title="Brush size">
+          <span style="font-size:.78rem;color:var(--muted)">Size</span>
+          <button class="cbtn" style="background:#38bdf8" onclick="setColor('#38bdf8')" title="Blue"></button>
+          <button class="cbtn" style="background:#fbbf24" onclick="setColor('#fbbf24')" title="Yellow"></button>
+          <button class="cbtn" style="background:#f87171" onclick="setColor('#f87171')" title="Red"></button>
+          <button class="cbtn" style="background:#34d399" onclick="setColor('#34d399')" title="Green"></button>
+          <button class="cbtn" style="background:#e2e8f0" onclick="setColor('#e2e8f0')" title="White"></button>
+          <button class="cbtn" style="background:#1a2235;border-color:#475569!important" onclick="setColor('#1a2235')" title="Eraser"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════
+     STEP 2: RNA POLYMERASE BLOCKED
+════════════════════════════════════════ -->
+<section id="step2">
+  <div class="step-header sh-s2 animate-in">
+    <div class="step-num">🧫</div>
+    <div>
+      <h2>Step 2: The Cell Cannot Read Its Own DNA</h2>
+      <p>RNA Polymerase travels along DNA to build mRNA — but when it hits a thymine dimer, it stalls. The result: a truncated, faulty mRNA that produces a non-functional protein.</p>
+    </div>
+  </div>
+
+  <!-- STEP 2 DIAGRAM IMAGE -->
+  <div class="diagram-box">
+    <h3>📸 Simulation Diagram — RNA Polymerase Stalled</h3>
+    <img class="diagram-img" src="https://lqaitnsphcretimgxxdz.supabase.co/storage/v1/object/sign/generated-images/c0941729-9cdc-40d5-9d4a-acc9ea9b06c9/2026-04-29T19-14-09-976Z-c0941729-9cdc-40d5-9d4a-acc9ea9b06c9.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lMjMyNzgzMy0zNWI4LTRkNGItYTVmOS00M2FmZjY3YTJlMmQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJnZW5lcmF0ZWQtaW1hZ2VzL2MwOTQxNzI5LTljZGMtNDBkNS05ZDRhLWFjYzllYTliMDZjOS8yMDI2LTA0LTI5VDE5LTE0LTA5LTk3NlotYzA5NDE3MjktOWNkYy00MGQ1LTlkNGEtYWNjOWVhOWIwNmM5LnBuZyIsImlhdCI6MTc3NzQ5MDA1MCwiZXhwIjoxNzc3NDkzNjUwfQ.placeholder" alt="RNA Polymerase stalled" onerror="this.style.display='none';document.getElementById('svgRNAP').style.display='block'"/>
+    <svg id="svgRNAP" viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#0f172a;">
+      <!-- DNA template strand -->
+      <text x="20" y="110" fill="#94a3b8" font-size="11">DNA Template Strand →</text>
+      <rect x="20" y="118" width="660" height="18" rx="9" fill="#1e3a5f" stroke="#60a5fa" stroke-width="1.5"/>
+      <!-- Base letters -->
+      <text x="35" y="131" fill="#60a5fa" font-size="9">A</text><text x="60" y="131" fill="#60a5fa" font-size="9">C</text>
+      <text x="85" y="131" fill="#60a5fa" font-size="9">G</text><text x="110" y="131" fill="#60a5fa" font-size="9">T</text>
+      <text x="135" y="131" fill="#60a5fa" font-size="9">A</text><text x="160" y="131" fill="#60a5fa" font-size="9">C</text>
+      <!-- Thymine dimer on DNA -->
+      <rect x="185" y="114" width="52" height="26" rx="6" fill="#f59e0b" opacity=".85"/>
+      <text x="211" y="131" text-anchor="middle" fill="#000" font-size="10" font-weight="bold">T≡T</text>
+      <text x="211" y="148" text-anchor="middle" fill="#fbbf24" font-size="9">DIMER</text>
+      <!-- Remaining DNA -->
+      <text x="248" y="131" fill="#60a5fa" font-size="9">G</text><text x="273" y="131" fill="#60a5fa" font-size="9">A</text>
+      <text x="298" y="131" fill="#60a5fa" font-size="9">T</text><text x="323" y="131" fill="#60a5fa" font-size="9">C</text>
+      <text x="348" y="131" fill="#60a5fa" font-size="9">G</text><text x="373" y="131" fill="#60a5fa" font-size="9">A</text>
+      <text x="398" y="131" fill="#60a5fa" font-size="9">T</text><text x="423" y="131" fill="#60a5fa" font-size="9">C</text>
+      <!-- RNA Polymerase -->
+      <ellipse cx="175" cy="105" rx="40" ry="28" fill="#2563eb" opacity=".85"/>
+      <text x="175" y="100" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">RNA</text>
+      <text x="175" y="112" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Pol II</text>
+      <!-- STALLED label -->
+      <rect x="130" y="68" width="90" height="22" rx="6" fill="#ef4444" opacity=".9"/>
+      <text x="175" y="83" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">⛔ STALLED</text>
+      <line x1="175" y1="90" x2="175" y2="98" stroke="#ef4444" stroke-width="2"/>
+      <!-- mRNA (incomplete) -->
+      <text x="20" y="175" fill="#94a3b8" font-size="11">Incomplete mRNA →</text>
+      <rect x="20" y="182" width="140" height="16" rx="8" fill="#7c3aed" opacity=".7"/>
+      <text x="90" y="194" text-anchor="middle" fill="#c4b5fd" font-size="9">partial mRNA</text>
+      <text x="165" y="194" fill="#94a3b8" font-size="9">✗ truncated here</text>
+      <!-- Arrow showing consequence -->
+      <text x="20" y="225" fill="#f87171" font-size="11">→ Faulty protein → Loss of function → Possible cancer</text>
+      <!-- Cascade boxes -->
+      <rect x="20" y="235" width="95" height="28" rx="7" fill="rgba(239,68,68,.15)" stroke="#ef4444" stroke-width="1"/>
+      <text x="67" y="253" text-anchor="middle" fill="#f87171" font-size="9">Faulty mRNA</text>
+      <text x="120" y="252" fill="#94a3b8" font-size="14">→</text>
+      <rect x="135" y="235" width="95" height="28" rx="7" fill="rgba(239,68,68,.15)" stroke="#ef4444" stroke-width="1"/>
+      <text x="182" y="253" text-anchor="middle" fill="#f87171" font-size="9">Faulty Protein</text>
+      <text x="235" y="252" fill="#94a3b8" font-size="14">→</text>
+      <rect x="250" y="235" width="110" height="28" rx="7" fill="rgba(239,68,68,.15)" stroke="#ef4444" stroke-width="1"/>
+      <text x="305" y="253" text-anchor="middle" fill="#f87171" font-size="9">Lost Growth Control</text>
+      <text x="366" y="252" fill="#94a3b8" font-size="14">→</text>
+      <rect x="382" y="235" width="70" height="28" rx="7" fill="rgba(220,38,38,.3)" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="417" y="253" text-anchor="middle" fill="#fca5a5" font-size="10" font-weight="bold">CANCER</text>
+    </svg>
+  </div>
+
+  <!-- TRANSCRIPTION PATHWAY -->
+  <div class="diagram-box">
+    <h3>🔄 Normal Transcription vs. Blocked Transcription</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.25);border-radius:10px;padding:14px;">
+        <p style="font-size:.85rem;font-weight:700;color:var(--repair);margin-bottom:8px;">✅ Normal Transcription</p>
+        <div class="pathway" style="flex-direction:column;gap:6px;">
+          <div class="pw-step"><span class="icon">🧬</span>DNA template<span class="label">intact sequence</span></div>
+          <div style="text-align:center;color:var(--repair);font-size:1.2rem;">↓</div>
+          <div class="pw-step"><span class="icon">🔵</span>RNA Polymerase<span class="label">reads smoothly</span></div>
+          <div style="text-align:center;color:var(--repair);font-size:1.2rem;">↓</div>
+          <div class="pw-step"><span class="icon">📜</span>Complete mRNA<span class="label">correct sequence</span></div>
+          <div style="text-align:center;color:var(--repair);font-size:1.2rem;">↓</div>
+          <div class="pw-step"><span class="icon">⚙️</span>Functional Protein<span class="label">normal cell function</span></div>
+        </div>
+      </div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:14px;">
+        <p style="font-size:.85rem;font-weight:700;color:var(--danger);margin-bottom:8px;">❌ Blocked Transcription</p>
+        <div class="pathway" style="flex-direction:column;gap:6px;">
+          <div class="pw-step"><span class="icon">🧬</span>DNA + Dimer<span class="label">T≡T bulge</span></div>
+          <div style="text-align:center;color:var(--danger);font-size:1.2rem;">↓</div>
+          <div class="pw-step"><span class="icon">⛔</span>RNA Pol Stalls<span class="label">cannot read dimer</span></div>
+          <div style="text-align:center;color:var(--danger);font-size:1.2rem;">↓</div>
+          <div class="pw-step"><span class="icon">✂️</span>Truncated mRNA<span class="label">wrong/missing codons</span></div>
+          <div style="text-align:center;color:var(--danger);font-size:1.2rem;">↓</div>
+          <div class="pw-step"><span class="icon">💥</span>Non-functional Protein<span class="label">lost growth control</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card ic-dna">
+      <h3>🔵 RNA Polymerase Function</h3>
+      <p>RNA Polymerase reads the DNA template strand in the 3'→5' direction and builds a complementary <strong>mRNA strand</strong> in the 5'→3' direction. Each codon (3-base unit) in mRNA codes for a specific amino acid in the resulting protein.</p>
+    </div>
+    <div class="info-card ic-danger">
+      <h3>🚧 Why It Stalls</h3>
+      <p>The thymine dimer creates a physical <strong>bulge and distortion</strong> in the helix. RNA Polymerase cannot "read" the fused bases because they no longer have the correct hydrogen-bonding geometry to serve as a template. The enzyme physically cannot advance past the lesion.</p>
+    </div>
+    <div class="info-card ic-danger">
+      <h3>🎯 Cancer Connection</h3>
+      <p>If the damaged gene is a <strong>tumor suppressor gene</strong> (like <em>p53</em> or <em>BRCA1</em>) or a <strong>proto-oncogene</strong>, the resulting faulty protein can cause cells to divide uncontrollably — the definition of cancer at the cellular level.</p>
+    </div>
+  </div>
+
+  <div class="q-section">
+    <h3>📝 Step 2 Questions</h3>
+    <div class="q-block" style="--ql:#2563eb">
+      <span class="q-num" style="background:#2563eb">Q5</span>
+      <p>What is the normal function of RNA Polymerase? What molecule does it build?</p>
+      <textarea id="q5" placeholder="Type your answer here…" rows="3"></textarea>
+    </div>
+    <div class="q-block">
+      <span class="q-num" style="background:#2563eb">Q6</span>
+      <p>Describe what happens when RNA Polymerase encounters the thymine dimer. Why can it not continue reading the DNA normally?</p>
+      <textarea id="q6" placeholder="Type your answer here…" rows="4"></textarea>
+    </div>
+    <div class="q-block">
+      <span class="q-num" style="background:#2563eb">Q7</span>
+      <p>The information panel states that a faulty mRNA leads to a faulty protein. Explain this chain of events in your own words, starting from the thymine dimer and ending with a non-functional protein.</p>
+      <textarea id="q7" placeholder="Start: Thymine dimer distorts the helix…" rows="5"></textarea>
+    </div>
+    <div class="q-block">
+      <span class="q-num" style="background:#2563eb">Q8</span>
+      <p>How could damage to a single gene lead to cancer? Be specific about which type of gene would need to be affected and what "losing growth control" means at the cellular level.</p>
+      <textarea id="q8" placeholder="Type your answer here…" rows="5"></textarea>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ══════════════════════════════════════
+     STEP 3: NER REPAIR
+════════════════════════════════════════ -->
+<section id="step3">
+  <div class="step-header sh-s3 animate-in">
+    <div class="step-num">🔧</div>
+    <div>
+      <h2>Step 3: Nucleotide Excision Repair (NER)</h2>
+      <p>The cell's most important UV-damage repair system. Four precise phases: Detect → Excise → Rebuild → Seal. A healthy cell can repair thousands of dimers per day.</p>
+    </div>
+  </div>
+
+  <!-- NER DIAGRAM SVG -->
+  <div class="diagram-box">
+    <h3>🔬 NER — Four-Phase Repair Animation</h3>
+    <svg viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#0f172a;">
+      <!-- Phase labels -->
+      <rect x="10" y="10" width="155" height="95" rx="10" fill="#0f2a1f" stroke="#34d399" stroke-width="1.5"/>
+      <text x="87" y="32" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold">① DETECTION</text>
+      <ellipse cx="87" cy="68" rx="22" ry="16" fill="#1e3a5f" stroke="#60a5fa" stroke-width="1.5"/>
+      <text x="87" y="72" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="bold">T≡T</text>
+      <ellipse cx="55" cy="72" rx="16" ry="10" fill="#7c3aed" opacity=".8"/>
+      <text x="55" y="76" text-anchor="middle" fill="#fff" font-size="7">XPC</text>
+      <text x="87" y="96" text-anchor="middle" fill="#94a3b8" font-size="8">XPC binds the bulge</text>
+
+      <rect x="180" y="10" width="155" height="95" rx="10" fill="#0f2a1f" stroke="#34d399" stroke-width="1.5"/>
+      <text x="257" y="32" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold">② EXCISION</text>
+      <rect x="210" y="50" width="95" height="16" rx="8" fill="#1e3a5f" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="240" y="47" width="35" height="22" rx="4" fill="#ef4444" opacity=".7"/>
+      <text x="257" y="62" text-anchor="middle" fill="#fff" font-size="8">cut</text>
+      <line x1="215" y1="58" x2="239" y2="58" stroke="#34d399" stroke-width="2"/>
+      <line x1="276" y1="58" x2="300" y2="58" stroke="#34d399" stroke-width="2"/>
+      <text x="257" y="86" text-anchor="middle" fill="#94a3b8" font-size="8">~28 nt removed</text>
+      <text x="257" y="96" text-anchor="middle" fill="#94a3b8" font-size="8">by endonucleases</text>
+
+      <rect x="350" y="10" width="155" height="95" rx="10" fill="#0f2a1f" stroke="#34d399" stroke-width="1.5"/>
+      <text x="427" y="32" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold">③ REBUILDING</text>
+      <rect x="380" y="50" width="95" height="16" rx="8" fill="#1e3a5f" stroke="#60a5fa" stroke-width="1"/>
+      <rect x="380" y="50" width="55" height="16" rx="8" fill="#34d399" opacity=".7"/>
+      <ellipse cx="445" cy="44" rx="16" ry="10" fill="#2563eb" opacity=".8"/>
+      <text x="445" y="48" text-anchor="middle" fill="#fff" font-size="7">DNA Pol</text>
+      <text x="427" y="82" text-anchor="middle" fill="#94a3b8" font-size="8">DNA Pol δ fills gap</text>
+      <text x="427" y="94" text-anchor="middle" fill="#94a3b8" font-size="8">using complementary strand</text>
+
+      <rect x="520" y="10" width="155" height="95" rx="10" fill="#0f2a1f" stroke="#34d399" stroke-width="1.5"/>
+      <text x="597" y="32" text-anchor="middle" fill="#34d399" font-size="11" font-weight="bold">④ SEALING</text>
+      <rect x="550" y="50" width="95" height="16" rx="8" fill="#34d399" opacity=".85"/>
+      <ellipse cx="600" cy="44" rx="16" ry="10" fill="#7c3aed" opacity=".8"/>
+      <text x="600" y="48" text-anchor="middle" fill="#fff" font-size="7">Ligase</text>
+      <text x="597" y="82" text-anchor="middle" fill="#94a3b8" font-size="8">DNA Ligase seals</text>
+      <text x="597" y="94" text-anchor="middle" fill="#94a3b8" font-size="8">the final nick ✓</text>
+
+      <!-- Arrows between phases -->
+      <text x="165" y="60" fill="#34d399" font-size="20">→</text>
+      <text x="335" y="60" fill="#34d399" font-size="20">→</text>
+      <text x="505" y="60" fill="#34d399" font-size="20">→</text>
+
+      <!-- FULL PROCESS DIAGRAM -->
+      <text x="350" y="125" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="bold">Full NER Process on DNA Helix</text>
+
+      <!-- DNA helix representation -->
+      <!-- Strand 1 -->
+      <path d="M30,160 Q90,145 150,160 Q210,175 270,160 Q330,145 390,160 Q450,175 510,160 Q570,145 630,160 Q660,168 680,160" stroke="#60a5fa" stroke-width="3" fill="none"/>
+      <!-- Strand 2 -->
+      <path d="M30,195 Q90,210 150,195 Q210,180 270,195 Q330,210 390,195 Q450,180 510,195 Q570,210 630,195 Q660,187 680,195" stroke="#818cf8" stroke-width="3" fill="none"/>
+      <!-- Base pairs -->
+      <line x1="90" y1="150" x2="90" y2="207" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <line x1="150" y1="160" x2="150" y2="195" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <!-- Dimer site -->
+      <rect x="195" y="153" width="60" height="14" rx="7" fill="#f59e0b" opacity=".8"/>
+      <text x="225" y="164" text-anchor="middle" fill="#000" font-size="9" font-weight="bold">T≡T DIMER</text>
+      <line x1="330" y1="160" x2="330" y2="195" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <line x1="390" y1="160" x2="390" y2="195" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <line x1="450" y1="175" x2="450" y2="180" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <line x1="510" y1="160" x2="510" y2="195" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <line x1="570" y1="150" x2="570" y2="207" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+      <line x1="630" y1="160" x2="630" y2="195" stroke="#38bdf8" stroke-width="2" opacity=".5"/>
+
+      <!-- PHASE 2: Gap after excision -->
+      <text x="225" y="240" text-anchor="middle" fill="#94a3b8" font-size="10">After Excision: ~28 nt gap</text>
+      <path d="M30,260 Q90,245 130,258" stroke="#60a5fa" stroke-width="3" fill="none"/>
+      <path d="M320,262 Q360,250 390,260 Q450,275 510,260 Q570,245 630,260" stroke="#60a5fa" stroke-width="3" fill="none"/>
+      <path d="M30,295 Q90,310 150,295 Q210,280 270,295 Q330,310 390,295 Q450,280 510,295 Q570,310 630,295" stroke="#818cf8" stroke-width="3" fill="none"/>
+      <rect x="130" y="252" width="190" height="14" rx="7" fill="rgba(239,68,68,.2)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <text x="225" y="263" text-anchor="middle" fill="#f87171" font-size="9">GAP (excised region)</text>
+      <!-- complementary strand intact -->
+      <text x="225" y="310" text-anchor="middle" fill="#818cf8" font-size="9">← Complementary strand intact (template)</text>
+
+      <!-- PHASE 3: Rebuilding -->
+      <text x="225" y="345" text-anchor="middle" fill="#94a3b8" font-size="10">After Rebuilding: New nucleotides inserted</text>
+      <path d="M30,365 Q90,350 130,363" stroke="#60a5fa" stroke-width="3" fill="none"/>
+      <rect
