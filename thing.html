@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Knowledge Base</title>
+    
+    <!-- Load Tailwind CSS for modern, responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Load Three.js for 3D modeling -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Load OrbitControls to allow user interaction with the 3D model -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Tailwind slate-900 */
+            color: #f8fafc; /* Tailwind slate-50 */
+        }
+        /* Ensure the 3D canvas fills its container */
+        #model-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            outline: none;
+        }
+        /* Custom scrollbar for the info panel */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Section -->
+    <header class="bg-slate-800 shadow-lg py-6 px-8 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+                    Interactive Knowledge Base
+                </h1>
+                <p class="text-slate-400 mt-2 text-sm max-w-2xl">
+                    Explore the interactive 3D models and read the detailed information panels below. All necessary data and concepts are covered comprehensively within these modules.
+                </p>
+            </div>
+            <!-- Notification badge for interactivity -->
+            <div class="hidden md:flex items-center gap-2 bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full border border-blue-500/30 text-sm font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                Interact with the 3D Model
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Interactive 3D Model (Spans 7 columns on large screens) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+            <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden relative group">
+                <!-- Instruction Overlay (fades out on hover) -->
+                <div class="absolute top-4 left-4 z-10 pointer-events-none transition-opacity duration-300 group-hover:opacity-50">
+                    <p class="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-lg text-xs font-mono text-slate-300 border border-slate-600 shadow-lg">
+                        Left Click: Rotate | Right Click: Pan | Scroll: Zoom
+                    </p>
+                </div>
+                
+                <!-- 3D Canvas Container -->
+                <div id="model-container" class="w-full h-[500px] cursor-grab active:cursor-grabbing bg-black"></div>
+            </div>
+
+            <!-- Navigation Buttons to switch active info -->
+            <div class="flex flex-wrap gap-3 mt-2" id="nav-buttons">
+                <!-- Buttons will be injected here by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Right Column: Detailed Information Panel (Spans 5 columns on large screens) -->
+        <div class="lg:col-span-5 flex flex-col">
+            <div class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 h-[500px] flex flex-col overflow-hidden">
+                
+                <!-- Panel Header -->
+                <div class="bg-slate-900/50 p-6 border-b border-slate-700">
+                    <h2 id="info-title" class="text-2xl font-bold text-white mb-1">Select a Topic</h2>
+                    <div id="info-subtitle" class="text-emerald-400 text-sm font-semibold tracking-wide uppercase">Interactive Module</div>
+                </div>
+                
+                <!-- Panel Body (Scrollable) -->
+                <div class="p-6 overflow-y-auto custom-scrollbar flex-grow text-slate-300 leading-relaxed" id="info-content">
+                    <p class="italic text-slate-500">Click one of the topics on the left to load detailed information, statistics, and concepts.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 py-6 text-center border-t border-slate-800 text-slate-500 text-sm mt-auto">
+        <p>Interactive Data & Models • Designed for comprehensive understanding</p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        // ==========================================
+        // 1. DATA KNOWLEDGE BASE
+        // Replace this data with the info needed to answer your specific questions.
+        // ==========================================
+        const knowledgeBase = {
+            sun: {
+                title: "The Sun (Central Star)",
+                subtitle: "Stellar Core & Energy Source",
+                content: `
+                    <p class="mb-4">The Sun is a yellow dwarf star at the center of our solar system. It accounts for 99.86% of the mass in the entire solar system. Its gravity holds the solar system together, keeping everything from the biggest planets to the smallest particles of debris in its orbit.</p>
+                    <h3 class="text-white font-semibold mt-6 mb-2">Key Statistics:</h3>
+                    <ul class="list-disc pl-5 space-y-1 mb-4">
+                        <li><strong>Core Temperature:</strong> ~15 million degrees Celsius</li>
+                        <li><strong>Composition:</strong> ~73% Hydrogen, ~25% Helium</li>
+                        <li><strong>Age:</strong> ~4.6 Billion Years</li>
+                    </ul>
+                    <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-600 mt-6">
+                        <h4 class="text-emerald-300 font-semibold mb-1">Concept: Nuclear Fusion</h4>
+                        <p class="text-sm">The process by which the Sun generates energy. In its core, immense pressure and heat force hydrogen atoms to fuse into helium, releasing massive amounts of energy in the form of light and heat.</p>
+                    </div>
+                `,
+                color: 0xffcc00 // Used for the 3D model
+            },
+            earth: {
+                title: "Earth (Terrestrial Planet)",
+                subtitle: "The Habitable Zone",
+                content: `
+                    <p class="mb-4">Earth is the third planet from the Sun and the only astronomical object known to harbor life. It is an ocean world, with about 71% of its surface covered by water.</p>
+                    <h3 class="text-white font-semibold mt-6 mb-2">Key Properties:</h3>
+                    <ul class="list-disc pl-5 space-y-1 mb-4">
+                        <li><strong>Atmosphere:</strong> 78% Nitrogen, 21% Oxygen</li>
+                        <li><strong>Magnetic Field:</strong> Generated by the liquid outer core, protecting the surface from solar winds.</li>
+                        <li><strong>Orbital Period:</strong> 365.25 days</li>
+                    </ul>
+                    <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-600 mt-6">
+                        <h4 class="text-blue-300 font-semibold mb-1">Concept: The Goldilocks Zone</h4>
+                        <p class="text-sm">Earth orbits within the circumSTELLAR habitable zone. This means it is situated at the perfect distance from the Sun—not too hot, not too cold—allowing liquid water to exist on the surface, which is essential for life as we know it.</p>
+                    </div>
+                `,
+                color: 0x2b82c9
+            },
+            mars: {
+                title: "Mars (The Red Planet)",
+                subtitle: "Dust, Ice, and Exploration",
+                content: `
+                    <p class="mb-4">Mars is the fourth planet from the Sun. It is a dusty, cold, desert world with a very thin atmosphere. It features the largest volcano in the solar system, Olympus Mons, and a massive canyon system called Valles Marineris.</p>
+                    <h3 class="text-white font-semibold mt-6 mb-2">Geological Features:</h3>
+                    <ul class="list-disc pl-5 space-y-1 mb-4">
+                        <li><strong>Surface:</strong> Rich in iron oxide (rust), giving it its red appearance.</li>
+                        <li><strong>Polar Caps:</strong> Made of water ice and dry ice (frozen CO2).</li>
+                        <li><strong>Atmosphere:</strong> Predominantly Carbon Dioxide (95%).</li>
+                    </ul>
+                    <div class="bg-slate-700/50 p-4 rounded-lg border border-slate-600 mt-6">
+                        <h4 class="text-red-400 font-semibold mb-1">Concept: Terraforming Potential</h4>
+                        <p class="text-sm">Because Mars has frozen water and a 24.6-hour day, it is the primary candidate for future human colonization and potential terraforming (the theoretical process of deliberately modifying its atmosphere to be Earth-like).</p>
+                    </div>
+                `,
+                color: 0xc1440e
+            }
+        };
+
+        // ==========================================
+        // 2. UI INTERACTION LOGIC
+        // ==========================================
+        const navContainer = document.getElementById('nav-buttons');
+        const infoTitle = document.getElementById('info-title');
+        const infoSubtitle = document.getElementById('info-subtitle');
+        const infoContent = document.getElementById('info-content');
+        
+        let currentActiveButton = null;
+
+        function loadContent(topicKey, buttonElement) {
+            const data = knowledgeBase[topicKey];
+            if (!data) return;
+
+            // Update Text Content
+            infoTitle.textContent = data.title;
+            infoSubtitle.textContent = data.subtitle;
+            infoContent.innerHTML = data.content;
+
+            // Update Button Styling (Active State)
+            if (currentActiveButton) {
+                currentActiveButton.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
+                currentActiveButton.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700', 'hover:bg-slate-700');
+            }
+            buttonElement.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700', 'hover:bg-slate-700');
+            buttonElement.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
+            currentActiveButton = buttonElement;
+
+            // Highlight the corresponding 3D object
+            highlight3DObject(topicKey);
+        }
+
+        // Generate Buttons Dynamically based on the Knowledge Base
+        Object.keys(knowledgeBase).forEach((key, index) => {
+            const btn = document.createElement('button');
+            btn.textContent = knowledgeBase[key].title.split(' ')[0]; // Use first word for button
+            btn.className = 'px-6 py-3 rounded-xl font-semibold border transition-all duration-200 shadow-sm bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900';
+            btn.onclick = () => loadContent(key, btn);
+            navContainer.appendChild(btn);
+
+            // Auto-load the first topic
+            if (index === 0) {
+                setTimeout(() => btn.click(), 100);
+            }
+        });
+
+        // ==========================================
+        // 3. THREE.JS 3D MODEL LOGIC
+        // ==========================================
+        const container = document.getElementById('model-container');
+        
+        // Scene setup
+        const scene = new THREE.Scene();
+        // Add a subtle starfield background using points
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({color: 0xFFFFFF, size: 0.5, sizeAttenuation: false});
+        const starsVertices = [];
+        for(let i=0; i<2000; i++) {
+            starsVertices.push(THREE.MathUtils.randFloatSpread(500)); // x
+            starsVertices.push(THREE.MathUtils.randFloatSpread(500)); // y
+            starsVertices.push(THREE.MathUtils.randFloatSpread(500)); // z
+        }
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+        const starField = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 30, 60);
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 20;
+        controls.maxDistance = 150;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 2, 300);
+        pointLight.position.set(0, 0, 0); // Light comes from the sun
+        scene.add(pointLight);
+
+        // Create 3D Objects mapping to our Knowledge Base
+        const meshes = {};
+        
+        // Helper function to create a planet/star
+        function createSphere(radius, color, xPos, isEmissive = false) {
+            const geometry = new THREE.SphereGeometry(radius, 32, 32);
+            let material;
+            if (isEmissive) {
+                // Sun material (glows)
+                material = new THREE.MeshBasicMaterial({ color: color });
+            } else {
+                // Planet material (reacts to light)
+                material = new THREE.MeshStandardMaterial({ 
+                    color: color, 
+                    roughness: 0.7, 
+                    metalness: 0.1 
+                });
+            }
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.x = xPos;
+            scene.add(mesh);
+            return mesh;
+        }
+
+        // Add Sun
+        meshes['sun'] = createSphere(8, knowledgeBase.sun.color, 0, true);
+        
+        // Add Orbit rings for visual aesthetics
+        function createOrbit(radius) {
+            const geom = new THREE.RingGeometry(radius, radius + 0.1, 64);
+            const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.2 });
+            const ring = new THREE.Mesh(geom, mat);
+            ring.rotation.x = Math.PI / 2;
+            scene.add(ring);
+        }
+
+        // Add Earth & Mars (simplified scale and distance for visualization)
+        const earthDistance = 25;
+        const marsDistance = 38;
+        
+        createOrbit(earthDistance);
+        meshes['earth'] = createSphere(2.5, knowledgeBase.earth.color, earthDistance);
+        
+        createOrbit(marsDistance);
+        meshes['mars'] = createSphere(1.8, knowledgeBase.mars.color, marsDistance);
+
+        // Create a highlight ring to show which object is selected
+        const highlightGeom = new THREE.RingGeometry(1, 1.2, 32);
+        const highlightMat = new THREE.MeshBasicMaterial({ color: 0x34d399, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const highlightRing = new THREE.Mesh(highlightGeom, highlightMat);
+        highlightRing.rotation.x = Math.PI / 2;
+        highlightRing.visible = false;
+        scene.add(highlightRing);
+
+        // Function to visually highlight the selected 3D object
+        function highlight3DObject(topicKey) {
+            const targetMesh = meshes[topicKey];
+            if (targetMesh) {
+                // Scale the highlight ring based on the object's radius
+                const radius = targetMesh.geometry.parameters.radius;
+                highlightRing.scale.set(radius + 1.5, radius + 1.5, 1);
+                highlightRing.visible = true;
+                
+                // Optional: We could animate the camera to look at the selected object here
+                // For this template, we just move the highlight ring to follow it
+            }
+        }
+
+        // Animation Loop
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const elapsedTime = clock.getElapsedTime();
+
+            // Rotate Sun
+            meshes['sun'].rotation.y += 0.005;
+
+            // Orbit Planets
+            meshes['earth'].position.x = Math.cos(elapsedTime * 0.3) * earthDistance;
+            meshes['earth'].position.z = Math.sin(elapsedTime * 0.3) * earthDistance;
+            meshes['earth'].rotation.y += 0.02;
+
+            meshes['mars'].position.x = Math.cos(elapsedTime * 0.2) * marsDistance;
+            meshes['mars'].position.z = Math.sin(elapsedTime * 0.2) * marsDistance;
+            meshes['mars'].rotation.y += 0.02;
+
+            // Update Highlight Ring position to follow the active object
+            Object.keys(meshes).forEach(key => {
+                if (meshes[key] && currentActiveButton && currentActiveButton.textContent.toLowerCase().includes(key)) {
+                    highlightRing.position.copy(meshes[key].position);
+                }
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Start animation loop when window loads
+        window.onload = () => {
+            animate();
+        };
+
+    </script>
+</body>
+</html>
