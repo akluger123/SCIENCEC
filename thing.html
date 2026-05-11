@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chemistry of Sunscreen: Molecular Defense</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Three.js for 3D Modeling and Interactive Simulations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* Tailwind slate-950 */
+            color: #f8fafc; /* Tailwind slate-50 */
+            overflow-x: hidden;
+        }
+        
+        /* 3D Canvas container styling */
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+            outline: none;
+        }
+        
+        /* Custom scrollbars for the info panel */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #0f172a; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #475569; 
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="glass py-5 px-8 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 tracking-tight">
+                    Molecular Defense: The Chemistry of Sunscreen
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Interactive Simulation & Knowledge Base</p>
+            </div>
+            <button onclick="showMessage('Simulation Guide', 'Use your mouse to interact with the 3D models. Left-click and drag to rotate, right-click to pan, and scroll to zoom. Select different topics on the right to load new simulations and data.')" 
+                    class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 px-4 py-2 rounded-lg border border-blue-500/30 transition-colors text-sm font-medium flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Help & Info
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+        
+        <!-- Left Side: 3D Visualization Area (Spans 7 columns) -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+            
+            <!-- 3D Canvas -->
+            <div class="relative w-full h-[400px] md:h-[550px] rounded-2xl overflow-hidden border border-slate-700 shadow-2xl bg-black group">
+                <div id="canvas-container" class="cursor-grab active:cursor-grabbing"></div>
+                
+                <!-- Dynamic Overlay Controls (Changes based on active module) -->
+                <div id="simulation-controls" class="absolute bottom-4 left-4 right-4 glass p-4 rounded-xl hidden">
+                    <!-- Wavelength Slider (Only for EM Spectrum module) -->
+                    <div id="wavelength-control" class="hidden flex-col gap-2">
+                        <div class="flex justify-between text-xs font-semibold text-slate-300">
+                            <span>100 nm (UVC)</span>
+                            <span id="current-wavelength-label" class="text-cyan-400 text-sm font-bold">300 nm</span>
+                            <span>800 nm (Infrared)</span>
+                        </div>
+                        <input type="range" id="wavelength-slider" min="100" max="800" value="300" class="w-full">
+                        <div class="flex justify-between mt-1 text-xs text-slate-400">
+                            <span>High Energy</span>
+                            <span id="current-energy-label" class="text-amber-400">E = 4.13 eV</span>
+                            <span>Low Energy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Pills -->
+            <div class="flex flex-wrap gap-2" id="nav-buttons">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+
+        <!-- Right Side: Information Panel (Spans 5 columns) -->
+        <div class="lg:col-span-5 flex flex-col">
+            <div class="glass rounded-2xl h-[400px] md:h-[550px] flex flex-col shadow-2xl">
+                <!-- Info Header -->
+                <div class="p-6 border-b border-slate-700/50 bg-slate-900/50 rounded-t-2xl">
+                    <div id="info-badge" class="inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider mb-2 bg-blue-500/20 text-blue-400 border border-blue-500/20">Module</div>
+                    <h2 id="info-title" class="text-2xl font-bold text-white leading-tight">Select a Module</h2>
+                </div>
+                
+                <!-- Info Content (Scrollable) -->
+                <div class="p-6 overflow-y-auto custom-scroll flex-grow text-slate-300 text-sm md:text-base leading-relaxed" id="info-content">
+                    <!-- Dynamic Content inserted here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Custom Modal (Message Box to replace alert()) -->
+    <div id="custom-modal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300" id="modal-content-box">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-white" id="modal-title">Notice</h3>
+                <button onclick="closeMessage()" class="text-slate-400 hover:text-white focus:outline-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-5 text-slate-300 text-sm" id="modal-body">
+                Message goes here.
+            </div>
+            <div class="p-4 border-t border-slate-700 bg-slate-850 rounded-b-xl flex justify-end">
+                <button onclick="closeMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors">Understood</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // ==========================================
+        // 1. DATA & KNOWLEDGE BASE
+        // Comprehensive text answering all core scientific concepts from the prompt.
+        // ==========================================
+        const knowledgeBase = {
+            em_spectrum: {
+                id: "em_spectrum",
+                title: "The EM Spectrum & UV Energy",
+                badge: "Physics of Light",
+                content: `
+                    <p class="mb-4">Ultraviolet (UV) radiation is a form of electromagnetic radiation with wavelengths shorter than visible light but longer than X-rays. "Ultraviolet" literally means "beyond violet," referring to its position just past the violet end of the visible spectrum.</p>
+                    
+                    <div class="bg-slate-900/80 p-4 rounded-lg border border-slate-700 mb-4">
+                        <h4 class="text-cyan-400 font-semibold mb-2">Calculating Photon Energy</h4>
+                        <p class="text-sm mb-2">Energy and wavelength share an inverse relationship. We calculate a photon's energy in electron-volts (eV) using the formula: <strong class="text-white">E = 1240 / λ</strong> (where λ is wavelength in nm).</p>
+                        <ul class="text-sm list-disc pl-5 space-y-1">
+                            <li><strong>300 nm (UVB):</strong> E = 1240 / 300 = <span class="text-amber-400 font-bold">4.13 eV</span></li>
+                            <li><strong>600 nm (Visible Orange):</strong> E = 1240 / 600 = <span class="text-amber-400 font-bold">2.06 eV</span></li>
+                        </ul>
+                        <p class="text-xs text-slate-400 mt-2">Notice how the shorter wavelength has exactly twice the energy.</p>
+                    </div>
+
+                    <h3 class="text-white font-semibold mb-2 mt-6">Regions, Sources & Effects:</h3>
+                    <ul class="space-y-3">
+                        <li class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                            <strong class="text-purple-400">UVC (100–280 nm):</strong> Highest energy. Emitted by welding arcs and germicidal lamps. Highly destructive to tissue, but thankfully, the ozone layer blocks natural solar UVC from reaching everyday life.
+                        </li>
+                        <li class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                            <strong class="text-blue-400">UVB (280–315 nm):</strong> Emitted by sunlight and tanning beds. Penetrates the superficial layers of skin. Its energy (~4 eV) perfectly matches the energy required to directly alter DNA structures (Thymine Dimers).
+                        </li>
+                        <li class="bg-slate-800/50 p-3 rounded border border-slate-700/50">
+                            <strong class="text-cyan-400">UVA (315–380 nm):</strong> Emitted by sunlight and blacklights. Penetrates deeply into skin, causing indirect damage via reactive oxygen species (ROS) and skin aging.
+                        </li>
+                    </ul>
+
+                    <div class="bg-red-900/20 p-4 rounded-lg border border-red-500/30 mt-6">
+                        <h4 class="text-red-400 font-semibold mb-1">Comparative Risk Example</h4>
+                        <p class="text-sm">A nail salon lamp (~365nm) produces 3.39 eV photons. A dermatologist's phototherapy lamp (~311nm) produces 3.98 eV photons. The 311nm lamp poses a much greater risk for direct DNA damage because its higher energy is capable of breaking bonds. It is false to claim all EM radiation is equally dangerous; radio waves and visible light lack the ionization energy to mutate DNA.</p>
+                    </div>
+                `
+            },
+            molecules: {
+                id: "molecules",
+                title: "How Sunscreen Molecules Work",
+                badge: "Chemistry",
+                content: `
+                    <p class="mb-4">Sunscreens protect the skin through two primary mechanisms: <strong>Chemical (Organic)</strong> absorbers and <strong>Physical (Inorganic)</strong> blockers. A "broad spectrum" designation means the formulation successfully protects against both UVA and UVB rays.</p>
+
+                    <h3 class="text-white font-semibold mb-2">Chemical (Organic) Filters</h3>
+                    <p class="text-sm mb-4">Chemical filters chemically interact with UV light. They possess <strong>conjugated molecular structures</strong>—a system of alternating single and double bonds. These structures contain delocalized electrons that can easily absorb the exact energy of incoming UV photons. When a photon is absorbed, the molecule enters an excited state, and then safely releases that energy as low-level, harmless heat.</p>
+                    
+                    <ul class="text-sm space-y-2 mb-6">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-400 font-bold mt-0.5">•</span>
+                            <div><strong>Octinoxate:</strong> Peak absorption is ~310 nm (UVB region). Highly effective at preventing direct DNA damage (thymine dimers).</div>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-purple-400 font-bold mt-0.5">•</span>
+                            <div><strong>Avobenzone:</strong> Peak absorption is ~360 nm (UVA region). Alone, it cannot prevent thymine dimers caused by UVB. It must be paired with an ingredient like Octinoxate to create a complete <em>broad-spectrum</em> formula.</div>
+                        </li>
+                    </ul>
+
+                    <h3 class="text-white font-semibold mb-2">Physical (Inorganic) Filters</h3>
+                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+                        <p class="text-sm mb-2"><strong>Zinc Oxide</strong> and Titanium Dioxide are physical filters. Unlike organic molecules that solely absorb, physical filters act as a physical barrier on top of the skin. They work by scattering, reflecting, and partially absorbing both UVA and UVB radiation across a very wide curve.</p>
+                    </div>
+
+                    <div class="mt-6 bg-emerald-900/20 p-4 rounded-lg border border-emerald-500/30">
+                        <h4 class="text-emerald-400 font-semibold mb-1">Protective Process</h4>
+                        <p class="text-sm">When a UV photon strikes an avobenzone molecule, the conjugated electrons absorb the photon. The molecule vibrates rapidly, converting the dangerous high-energy UV radiation into safe infrared (heat) energy. This is protective because the energy is safely dissipated before it can reach and mutate the cell's DNA.</p>
+                    </div>
+                `
+            },
+            dna: {
+                id: "dna",
+                title: "DNA Damage & Cellular Response",
+                badge: "Biology",
+                content: `
+                    <p class="mb-4">Why is the UVB energy range (specifically the "Thymine Dimer Danger Zone") so critical? The energy of UVB photons is perfectly tuned to disrupt the bonds between DNA bases.</p>
+
+                    <h3 class="text-white font-semibold mb-2">The Chain of Damage & Protection</h3>
+                    <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-6 text-sm space-y-3">
+                        <p>1. A <strong>UV-B photon</strong> enters a skin cell.</p>
+                        <p>2. If unprotected, the photon hits DNA, causing two adjacent thymine bases to bond to each other instead of their opposite pairs. This creates a kink called a <strong>thymine dimer</strong>.</p>
+                        <p>3. A cellular mechanism called <strong>NER (Nucleotide Excision Repair)</strong> attempts to cut out and fix the dimer.</p>
+                        <p>4. If NER fails before <strong>cell division</strong>, the error becomes a permanent <strong>mutation</strong>, potentially leading to melanoma.</p>
+                        <p class="text-emerald-300 font-semibold mt-2">With sunscreen: The sunscreen molecule's conjugated bonds absorb the UV-B photon, releasing its energy as harmless heat, completely preventing the dimer from forming.</p>
+                    </div>
+
+                    <h3 class="text-white font-semibold mb-2">Tanning: A Sign of Damage</h3>
+                    <p class="text-sm mb-4">A tan, a sunburn, and skin cancer are all responses to UV input. While a tan is often viewed as a "healthy glow," scientifically, it is the body's protective damage-response. When DNA is damaged by UV, cells trigger the production of melanin (pigment) to surround and shield the nucleus from further radiation. <strong>Therefore, a tan is evidence that cellular damage has already occurred.</strong></p>
+
+                    <div class="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+                        <h4 class="text-blue-300 font-semibold mb-1">Freja's Case (Melanoma Prevention)</h4>
+                        <p class="text-sm">Applying broad-spectrum sunscreen would have introduced conjugated molecules to Freja's skin surface. These molecules would have intercepted the high-energy (~4 eV) UVB wavelengths, absorbing the photons and dissipating them as heat. This would maintain the crucial damage-repair balance by ensuring her cellular NER mechanisms were not overwhelmed by thymine dimers, thus preventing the cascading mutations that lead to melanoma.</p>
+                    </div>
+                `
+            },
+            spf: {
+                id: "spf",
+                title: "SPF Math & Experimental Design",
+                badge: "Analysis",
+                content: `
+                    <p class="mb-4">SPF (Sun Protection Factor) measures protection specifically against UVB radiation (not UVA). The math behind SPF reveals a phenomenon of <em>diminishing returns</em>.</p>
+
+                    <h3 class="text-white font-semibold mb-2">The SPF Formula</h3>
+                    <p class="text-sm mb-3">Formula: <code>% UV Blocked = (1 - (1/SPF)) × 100</code></p>
+                    
+                    <div class="overflow-x-auto mb-6">
+                        <table class="w-full text-sm text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-800 text-slate-300">
+                                    <th class="p-2 border border-slate-700">SPF</th>
+                                    <th class="p-2 border border-slate-700">% Blocked</th>
+                                    <th class="p-2 border border-slate-700">% Penetrating</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-slate-400">
+                                <tr><td class="p-2 border border-slate-700">15</td><td class="p-2 border border-slate-700">93.3%</td><td class="p-2 border border-slate-700 font-bold text-red-400">6.7%</td></tr>
+                                <tr><td class="p-2 border border-slate-700">30</td><td class="p-2 border border-slate-700">96.7%</td><td class="p-2 border border-slate-700 font-bold text-orange-400">3.3%</td></tr>
+                                <tr><td class="p-2 border border-slate-700">50</td><td class="p-2 border border-slate-700">98.0%</td><td class="p-2 border border-slate-700 font-bold text-yellow-400">2.0%</td></tr>
+                                <tr><td class="p-2 border border-slate-700">100</td><td class="p-2 border border-slate-700">99.0%</td><td class="p-2 border border-slate-700 font-bold text-emerald-400">1.0%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="text-sm mb-4"><strong>Evaluating Claims:</strong> Is SPF 50 three times as protective as SPF 15? No. SPF 15 blocks ~93%, while SPF 50 blocks 98%. However, look at the <em>penetrating</em> UV. SPF 15 lets 6.7% through; SPF 50 lets 2% through. The amount getting through is cut by more than two-thirds. <br><br>
+                    Furthermore, jumping from SPF 50 to 100 only blocks an additional 1%. Because SPF fails to capture degradation over time, a dermatologist is correct: SPF 30 reapplied every 2 hours (maintaining a 3.3% penetration rate) is much better than SPF 100 applied once, which quickly degrades, leaving the skin entirely unprotected.</p>
+
+                    <h3 class="text-white font-semibold mb-2 mt-6">Experimental Design</h3>
+                    <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700 text-sm space-y-2">
+                        <p><strong>Testing Variable:</strong> SPF Level (15 vs 30 vs 50).</p>
+                        <p><strong>Research Question:</strong> How does increasing the SPF level affect the amount of UV radiation transmitted through a transparent barrier?</p>
+                        <p><strong>Variables:</strong> <br>- <em>Independent:</em> SPF Level.<br>- <em>Dependent:</em> Color change of photochromic paper.<br>- <em>Controlled:</em> Amount of sunscreen applied (thickness), application time, type of light source, distance from light.</p>
+                        <p><strong>Reliability:</strong> To ensure reliable data, the experiment must include multiple repeated trials (e.g., 5 trials per SPF level) and calculate an average color change to account for anomalies.</p>
+                    </div>
+                `
+            }
+        };
+
+        // ==========================================
+        // 2. UI LOGIC & STATE
+        // ==========================================
+        const navContainer = document.getElementById('nav-buttons');
+        const infoTitle = document.getElementById('info-title');
+        const infoBadge = document.getElementById('info-badge');
+        const infoContent = document.getElementById('info-content');
+        const simControls = document.getElementById('simulation-controls');
+        const waveControl = document.getElementById('wavelength-control');
+        
+        let currentActiveId = null;
+
+        function loadModule(moduleId) {
+            const data = knowledgeBase[moduleId];
+            if (!data) return;
+
+            // Update Text Content
+            infoTitle.innerHTML = data.title;
+            infoBadge.textContent = data.badge;
+            infoContent.innerHTML = data.content;
+            infoContent.scrollTo(0,0);
+
+            // Update UI Buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.id === moduleId) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
+                    btn.classList.remove('bg-slate-800', 'text-slate-400', 'border-slate-700');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
+                    btn.classList.add('bg-slate-800', 'text-slate-400', 'border-slate-700');
+                }
+            });
+
+            currentActiveId = moduleId;
+            
+            // Toggle specific UI controls based on module
+            simControls.classList.remove('hidden');
+            if(moduleId === 'em_spectrum') {
+                waveControl.classList.remove('hidden');
+                waveControl.classList.add('flex');
+            } else {
+                waveControl.classList.add('hidden');
+                waveControl.classList.remove('flex');
+            }
+
+            // Switch 3D Scene states
+            switch3DScene(moduleId);
+        }
+
+        // Generate Navigation Buttons
+        Object.keys(knowledgeBase).forEach((key, index) => {
+            const btn = document.createElement('button');
+            btn.textContent = knowledgeBase[key].title;
+            btn.dataset.id = key;
+            btn.className = 'nav-btn px-4 py-2 rounded-lg text-sm font-semibold border transition-all duration-200 shadow-sm bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 focus:outline-none';
+            btn.onclick = () => loadModule(key);
+            navContainer.appendChild(btn);
+        });
+
+        // Custom Message Box (Replaces alert)
+        function showMessage(title, message) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-body').textContent = message;
+            const modal = document.getElementById('custom-modal');
+            const box = document.getElementById('modal-content-box');
+            modal.classList.remove('hidden');
+            // Small delay to allow CSS transitions to apply
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                box.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeMessage() {
+            const modal = document.getElementById('custom-modal');
+            const box = document.getElementById('modal-content-box');
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // ==========================================
+        // 3. THREE.JS SIMULATIONS
+        // ==========================================
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 5, 20);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(10, 20, 10);
+        scene.add(dirLight);
+
+        // --- Groups for different modules ---
+        const groups = {
+            em_spectrum: new THREE.Group(),
+            molecules: new THREE.Group(),
+            dna: new THREE.Group(),
+            spf: new THREE.Group()
+        };
+        Object.values(groups).forEach(g => scene.add(g));
+
+        // --- Module 1: EM Spectrum Wave ---
+        // A dynamic sine wave
+        const wavePoints = [];
+        for(let i=0; i<100; i++) wavePoints.push(new THREE.Vector3(i/5 - 10, 0, 0));
+        const waveGeometry = new THREE.BufferGeometry().setFromPoints(wavePoints);
+        const waveMaterial = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 2 });
+        const waveLine = new THREE.Line(waveGeometry, waveMaterial);
+        groups.em_spectrum.add(waveLine);
+
+        // Add a glowing particle to represent a photon
+        const photonGeom = new THREE.SphereGeometry(0.3, 16, 16);
+        const photonMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const photon = new THREE.Mesh(photonGeom, photonMat);
+        groups.em_spectrum.add(photon);
+
+        let currentWavelength = 300;
+        document.getElementById('wavelength-slider').addEventListener('input', (e) => {
+            currentWavelength = parseInt(e.target.value);
+            const energy = (1240 / currentWavelength).toFixed(2);
+            document.getElementById('current-wavelength-label').textContent = `\${currentWavelength} nm`;
+            document.getElementById('current-energy-label').textContent = `E = \${energy} eV`;
+            
+            // Update color based on spectrum
+            let color = new THREE.Color();
+            if(currentWavelength < 280) color.setHex(0xa855f7); // UVC Purple
+            else if(currentWavelength < 315) color.setHex(0x3b82f6); // UVB Blue
+            else if(currentWavelength < 380) color.setHex(0x06b6d4); // UVA Cyan
+            else if(currentWavelength < 700) color.setHSL((700 - currentWavelength)/400, 1, 0.5); // Visible
+            else color.setHex(0xef4444); // IR Red
+            
+            waveMaterial.color = color;
+            photonMat.color = color;
+            document.getElementById('current-wavelength-label').style.color = '#' + color.getHexString();
+        });
+
+        // --- Module 2: Molecules (Conjugated System) ---
+        // Create a hexagonal benzene ring representation
+        const carbonMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.2 });
+        const bondMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+        const moleculeCenter = new THREE.Group();
+        
+        for(let i=0; i<6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const carbon = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16), carbonMat);
+            carbon.position.set(Math.cos(angle)*2, Math.sin(angle)*2, 0);
+            moleculeCenter.add(carbon);
+            
+            // Bonds
+            const bond = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2), bondMat);
+            const nextAngle = ((i+1) / 6) * Math.PI * 2;
+            const midX = (Math.cos(angle)*2 + Math.cos(nextAngle)*2) / 2;
+            const midY = (Math.sin(angle)*2 + Math.sin(nextAngle)*2) / 2;
+            bond.position.set(midX, midY, 0);
+            bond.lookAt(Math.cos(nextAngle)*2, Math.sin(nextAngle)*2, 0);
+            bond.rotateX(Math.PI/2);
+            moleculeCenter.add(bond);
+        }
+        groups.molecules.add(moleculeCenter);
+
+        // Heat particles (hidden initially)
+        const heatGeom = new THREE.BufferGeometry();
+        const heatPos = [];
+        for(let i=0; i<50; i++) {
+            heatPos.push((Math.random()-0.5)*5, (Math.random()-0.5)*5, (Math.random()-0.5)*5);
+        }
+        heatGeom.setAttribute('position', new THREE.Float32BufferAttribute(heatPos, 3));
+        const heatMat = new THREE.PointsMaterial({ color: 0xff3300, size: 0.2, transparent: true, opacity: 0 });
+        const heatParticles = new THREE.Points(heatGeom, heatMat);
+        groups.molecules.add(heatParticles);
+
+        // --- Module 3: DNA Damage (Thymine Dimer) ---
+        const dnaStrand = new THREE.Group();
+        const backboneMat = new THREE.MeshStandardMaterial({ color: 0x0f172a }); // Slate 900
+        const rungMat1 = new THREE.MeshStandardMaterial({ color: 0x3b82f6 }); // Blue
+        const rungMat2 = new THREE.MeshStandardMaterial({ color: 0x10b981 }); // Green
+        const dimerMat = new THREE.MeshStandardMaterial({ color: 0xef4444 }); // Red (Damaged)
+
+        const rungs = [];
+        for(let i=-10; i<=10; i++) {
+            const angle = i * 0.4;
+            const y = i * 0.8;
+            const r = 2;
+            
+            // Backbones
+            const bb1 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), backboneMat);
+            bb1.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
+            const bb2 = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), backboneMat);
+            bb2.position.set(Math.cos(angle+Math.PI)*r, y, Math.sin(angle+Math.PI)*r);
+            dnaStrand.add(bb1, bb2);
+
+            // Rung
+            const isDimerTarget = (i === 0 || i === 1);
+            const currentRungMat = isDimerTarget ? rungMat1 : (i%2===0 ? rungMat1 : rungMat2);
+            const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, r*2), currentRungMat);
+            rung.position.set(0, y, 0);
+            rung.rotation.y = -angle;
+            rung.rotation.z = Math.PI/2;
+            
+            // Store target rungs for animation
+            if(isDimerTarget) {
+                rungs.push({ mesh: rung, originalY: y, index: i });
+            }
+            dnaStrand.add(rung);
+        }
+        groups.dna.add(dnaStrand);
+
+        // --- Module 4: SPF Bar Chart ---
+        const chartGroup = new THREE.Group();
+        const spfData = [
+            { val: 15, block: 93.3, col: 0xef4444 }, // Red
+            { val: 30, block: 96.7, col: 0xf97316 }, // Orange
+            { val: 50, block: 98.0, col: 0xeab308 }, // Yellow
+            { val: 100, block: 99.0, col: 0x10b981 } // Green
+        ];
+        
+        spfData.forEach((d, i) => {
+            // Penetrating UV Bar (Negative space concept)
+            const penVal = 100 - d.block;
+            const bar = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.8, 0.8, penVal, 32),
+                new THREE.MeshStandardMaterial({ color: d.col, transparent: true, opacity: 0.8 })
+            );
+            bar.position.set((i - 1.5) * 3, penVal/2 - 5, 0); // centered
+            
+            // Text Label Sprite (simulated with basic planes for simplicity in raw threejs)
+            const base = new THREE.Mesh(
+                new THREE.CylinderGeometry(1, 1, 0.5, 32),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b })
+            );
+            base.position.set((i - 1.5) * 3, -5, 0);
+            
+            chartGroup.add(bar, base);
+        });
+        groups.spf.add(chartGroup);
+
+
+        // --- Visibility Switcher ---
+        function switch3DScene(activeId) {
+            Object.keys(groups).forEach(id => {
+                groups[id].visible = (id === activeId);
+            });
+
+            // Camera resets
+            if(activeId === 'spf') {
+                camera.position.set(0, -2, 15);
+            } else if (activeId === 'em_spectrum') {
+                camera.position.set(0, 0, 15);
+            } else {
+                camera.position.set(0, 0, 20);
+            }
+            controls.target.set(0,0,0);
+        }
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+
+            if(currentActiveId === 'em_spectrum') {
+                // Animate wave based on wavelength frequency
+                const freq = 1000 / currentWavelength; 
+                const positions = waveLine.geometry.attributes.position.array;
+                for(let i=0; i<100; i++) {
+                    positions[i*3 + 1] = Math.sin((i/10) * freq - time*5) * 2;
+                }
+                waveLine.geometry.attributes.position.needsUpdate = true;
+                
+                // Move photon along wave
+                const cycle = (time * 2) % 100;
+                const idx = Math.floor(cycle);
+                if(idx < 99) {
+                    photon.position.set(positions[idx*3], positions[idx*3+1], positions[idx*3+2]);
+                }
+            }
+
+            if(currentActiveId === 'molecules') {
+                // Simulate chemical filter absorbing UV and releasing heat
+                const cycle = time % 4;
+                if(cycle < 2) {
+                    // Calm
+                    moleculeCenter.position.set(0, Math.sin(time)*0.5, 0);
+                    moleculeCenter.rotation.y = time * 0.2;
+                    heatMat.opacity = 0;
+                } else {
+                    // Excited (Absorbed UV) -> Vibrating -> Releasing Heat
+                    moleculeCenter.position.set(
+                        (Math.random()-0.5)*0.2, 
+                        (Math.random()-0.5)*0.2 + Math.sin(time)*0.5, 
+                        (Math.random()-0.5)*0.2
+                    );
+                    heatMat.opacity = Math.max(0, 1 - (cycle-2)); // fade out
+                    
+                    // expand particles
+                    const pPositions = heatParticles.geometry.attributes.position.array;
+                    for(let i=0; i<pPositions.length; i+=3) {
+                        pPositions[i] *= 1.02;
+                        pPositions[i+1] *= 1.02;
+                        pPositions[i+2] *= 1.02;
+                    }
+                    heatParticles.geometry.attributes.position.needsUpdate = true;
+                }
+                
+                // Reset particles at end of cycle
+                if(cycle > 3.9) {
+                    const pPositions = heatParticles.geometry.attributes.position.array;
+                    for(let i=0; i<pPositions.length; i+=3) {
+                        pPositions[i] = (Math.random()-0.5)*5;
+                        pPositions[i+1] = (Math.random()-0.5)*5;
+                        pPositions[i+2] = (Math.random()-0.5)*5;
+                    }
+                }
+            }
+
+            if(currentActiveId === 'dna') {
+                dnaStrand.rotation.y = time * 0.2;
+                
+                // Simulate Dimer formation periodically
+                const cycle = time % 6;
+                if(cycle < 3) {
+                    // Normal
+                    rungs.forEach(r => {
+                        r.mesh.material = (r.index === 0) ? rungMat1 : rungMat2;
+                        r.mesh.position.y = r.originalY;
+                        r.mesh.rotation.z = Math.PI/2;
+                    });
+                } else {
+                    // Dimer Formed (bent and red)
+                    rungs.forEach(r => {
+                        r.mesh.material = dimerMat;
+                        // Bend them towards each other
+                        if(r.index === 0) {
+                            r.mesh.position.y = r.originalY + 0.3;
+                            r.mesh.rotation.z = Math.PI/2 - 0.2;
+                        } else {
+                            r.mesh.position.y = r.originalY - 0.3;
+                            r.mesh.rotation.z = Math.PI/2 + 0.2;
+                        }
+                    });
+                }
+            }
+
+            if(currentActiveId === 'spf') {
+                chartGroup.rotation.y = Math.sin(time * 0.5) * 0.2; // subtle sway
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // Initialize App
+        window.onload = () => {
+            // Load the first module by default
+            loadModule('em_spectrum');
+            // Start the 3D rendering loop
+            animate();
+        };
+
+    </script>
+</body>
+</html>
