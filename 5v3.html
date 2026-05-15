@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNA Packaging & Karyotypes | Interactive Light Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #f8fafc;
+      --panel: rgba(255,255,255,0.82);
+      --panel-solid: #ffffff;
+      --border: #dbeafe;
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #2563eb;
+      --accent2: #06b6d4;
+      --good: #16a34a;
+      --warn: #b45309;
+      --soft: #eff6ff;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, #e0f2fe 0%, transparent 32%),
+        radial-gradient(circle at top right, #dbeafe 0%, transparent 28%),
+        linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+      color: var(--text);
+    }
+    h1, h2, h3, h4 {
+      font-family: "Space Grotesk", Inter, sans-serif;
+    }
+    .glass {
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(148,163,184,0.25);
+      box-shadow: 0 20px 40px rgba(15,23,42,0.08);
+    }
+    .pill {
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .tab-active {
+      border-bottom: 3px solid var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .section-title {
+      scroll-margin-top: 90px;
+    }
+    .card-hover {
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 35px rgba(37,99,235,.10);
+      border-color: #93c5fd;
+    }
+    .small-shadow { box-shadow: 0 8px 18px rgba(15,23,42,0.08); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  </style>
+</head>
+<body>
+
+<header class="sticky top-0 z-50 border-b border-blue-100 bg-white/85 backdrop-blur-xl">
+  <div class="max-w-7xl mx-auto px-5 py-4">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-700 to-cyan-600 bg-clip-text text-transparent">
+          DNA Packaging & Karyotypes
+        </h1>
+        <p class="text-slate-600 mt-1">
+          Interactive light-themed lab • all reference info built in • designed to support every worksheet answer
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <span class="pill px-3 py-1 rounded-full text-sm">Packaging hierarchy</span>
+        <span class="pill px-3 py-1 rounded-full text-sm">DNA builder</span>
+        <span class="pill px-3 py-1 rounded-full text-sm">Karyotype explorer</span>
+        <span class="pill px-3 py-1 rounded-full text-sm">Glossary + search</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-5 py-6">
+
+  <!-- Quick nav -->
+  <div class="glass rounded-2xl p-4 mb-6">
+    <div class="flex flex-wrap gap-2">
+      <button class="navbtn px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold" onclick="scrollToId('overview')">Overview</button>
+      <button class="navbtn px-4 py-2 rounded-xl bg-white border border-blue-100 text-slate-700 font-semibold" onclick="scrollToId('packaging')">Packaging</button>
+      <button class="navbtn px-4 py-2 rounded-xl bg-white border border-blue-100 text-slate-700 font-semibold" onclick="scrollToId('builder')">DNA Builder</button>
+      <button class="navbtn px-4 py-2 rounded-xl bg-white border border-blue-100 text-slate-700 font-semibold" onclick="scrollToId('karyotype')">Karyotypes</button>
+      <button class="navbtn px-4 py-2 rounded-xl bg-white border border-blue-100 text-slate-700 font-semibold" onclick="scrollToId('cancer')">Cancer Links</button>
+      <button class="navbtn px-4 py-2 rounded-xl bg-white border border-blue-100 text-slate-700 font-semibold" onclick="scrollToId('glossary')">Glossary</button>
+    </div>
+  </div>
+
+  <!-- Overview -->
+  <section id="overview" class="section-title grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+    <div class="lg:col-span-8 glass rounded-3xl p-6">
+      <h2 class="text-2xl font-bold text-slate-900 mb-3">What this lab is about</h2>
+      <div class="space-y-4 text-slate-700 leading-relaxed">
+        <p>
+          DNA must fit inside the nucleus, so cells package it in several levels of folding. This packaging changes how accessible genes are, which affects gene expression, DNA repair, and chromosome behavior during cell division.
+        </p>
+        <p>
+          A karyotype is a visual arrangement of chromosomes by size, shape, and banding pattern. It is used to identify chromosome number changes, sex chromosome patterns, and major structural abnormalities such as deletions, duplications, translocations, and extra chromosomes.
+        </p>
+        <p>
+          This page is built like a reference station: the content is organized so a student can use it to answer detailed worksheet questions without the questions themselves appearing on screen. Think of it as a biology Swiss Army knife, but with fewer tiny pieces.
+        </p>
+      </div>
+    </div>
+
+    <div class="lg:col-span-4 glass rounded-3xl p-6">
+      <h3 class="text-xl font-bold mb-3">Fast Facts</h3>
+      <div class="space-y-3 text-sm">
+        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200">
+          <div class="font-semibold">DNA length per human cell</div>
+          <div class="text-slate-600">About 2 meters</div>
+        </div>
+        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200">
+          <div class="font-semibold">Nucleus diameter</div>
+          <div class="text-slate-600">About 6 micrometers</div>
+        </div>
+        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200">
+          <div class="font-semibold">Nucleosome DNA wrapped</div>
+          <div class="text-slate-600">About 147 base pairs</div>
+        </div>
+        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200">
+          <div class="font-semibold">Normal human chromosome number</div>
+          <div class="text-slate-600">46 total (23 pairs)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search / tool -->
+  <section class="glass rounded-3xl p-6 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div>
+        <h2 class="text-2xl font-bold">Search the lab reference</h2>
+        <p class="text-slate-600">Type a concept to instantly find relevant information in the page.</p>
+      </div>
+      <div class="w-full lg:w-[420px]">
+        <input id="searchBox" type="text" oninput="filterReference()" placeholder="Search: histone, trisomy, centromere, nondisjunction..."
+               class="w-full px-4 py-3 rounded-2xl border border-blue-200 bg-white outline-none focus:ring-4 focus:ring-blue-100">
+      </div>
+    </div>
+    <div id="searchResults" class="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+  </section>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap border-b border-blue-100 mb-5">
+    <button id="tab0" class="tab-active px-5 py-3" onclick="switchTab(0)">Packaging Levels</button>
+    <button id="tab1" class="px-5 py-3 text-slate-600" onclick="switchTab(1)">DNA Builder</button>
+    <button id="tab2" class="px-5 py-3 text-slate-600" onclick="switchTab(2)">Karyotype Explorer</button>
+    <button id="tab3" class="px-5 py-3 text-slate-600" onclick="switchTab(3)">Cancer & Errors</button>
+  </div>
+
+  <!-- Tab 0 -->
+  <section id="content0">
+    <div id="packaging" class="section-title grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+      <div class="lg:col-span-7 glass rounded-3xl p-6">
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-2xl font-bold">DNA Packaging Hierarchy</h2>
+            <p class="text-slate-600">From double helix to visible chromosome</p>
+          </div>
+          <span class="pill px-3 py-1 rounded-full text-sm">Click a level for details</span>
+        </div>
+
+        <div id="levels" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+
+      <div class="lg:col-span-5 glass rounded-3xl p-6">
+        <h3 id="detailTitle" class="text-2xl font-bold mb-2">Select a packaging level</h3>
+        <p id="detailSubtitle" class="text-blue-600 font-semibold mb-4">Detailed information appears here</p>
+        <div id="detailBody" class="space-y-4 text-slate-700 leading-relaxed">
+          <p>
+            The DNA packaging system is hierarchical. Each level packs the DNA more tightly than the one before, making it easier to store, regulate, and separate during cell division.
+          </p>
+          <p>
+            Choose a level to see how that structure works, why it matters, and how it connects to repair, replication, and chromosome formation.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass rounded-3xl p-6">
+      <h3 class="text-xl font-bold mb-4">Packaging summary table</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-blue-50 text-slate-700">
+              <th class="p-3 border border-blue-100">Level</th>
+              <th class="p-3 border border-blue-100">Structure</th>
+              <th class="p-3 border border-blue-100">Approx. size</th>
+              <th class="p-3 border border-blue-100">Why it matters</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 1 -->
+  <section id="content1" class="hidden">
+    <div id="builder" class="section-title glass rounded-3xl p-6 mb-6">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-2xl font-bold">LEGO DNA Builder</h2>
+          <p class="text-slate-600">Build a DNA strand and automatically see the complementary strand</p>
+        </div>
+        <button onclick="resetBuilder()" class="px-4 py-2 rounded-xl bg-red-500 text-white font-semibold">Reset Builder</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-8">
+          <div id="builderArea" class="min-h-[360px] rounded-3xl border-2 border-dashed border-blue-200 bg-slate-50 p-5 flex flex-wrap gap-3 content-start">
+            <div class="w-full text-slate-400 text-center py-24">
+              Drag bases from the palette into this area.
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm">
+            <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-3">
+              <div class="font-semibold text-emerald-700">Strand 1 (5' → 3')</div>
+              <div id="strand1" class="mono text-emerald-800 break-all"></div>
+            </div>
+            <div class="bg-rose-50 border border-rose-100 rounded-2xl p-3">
+              <div class="font-semibold text-rose-700">Strand 2 (3' → 5')</div>
+              <div id="strand2" class="mono text-rose-800 break-all"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4">
+          <h3 class="font-bold text-lg mb-3">Base palette</h3>
+          <div id="palette" class="grid grid-cols-2 gap-3"></div>
+
+          <div class="mt-5 glass rounded-2xl p-4">
+            <h4 class="font-bold mb-2">What the builder teaches</h4>
+            <ul class="space-y-2 text-sm text-slate-700">
+              <li>• <strong>Complementary base pairing:</strong> A pairs with T, G pairs with C</li>
+              <li>• <strong>Antiparallel strands:</strong> opposite directions</li>
+              <li>• <strong>Hydrogen bonds:</strong> A-T has 2, G-C has 3</li>
+              <li>• <strong>Uniform width:</strong> a purine always pairs with a pyrimidine</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 2 -->
+  <section id="content2" class="hidden">
+    <div id="karyotype" class="section-title grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+      <div class="lg:col-span-5 glass rounded-3xl p-6">
+        <h2 class="text-2xl font-bold mb-3">Karyotype Explorer</h2>
+        <p class="text-slate-600 mb-4">
+          A karyotype is an ordered display of chromosomes arranged by size, centromere position, and banding pattern.
+        </p>
+
+        <div class="space-y-4">
+          <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+            <div class="font-semibold text-blue-800">Normal human karyotype</div>
+            <div class="text-slate-700">46 chromosomes total = 23 pairs</div>
+            <div class="text-slate-700">22 autosome pairs + 1 sex chromosome pair</div>
+          </div>
+
+          <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4">
+            <div class="font-semibold text-amber-800">Example abnormal karyotype</div>
+            <div class="text-slate-700">47 chromosomes total = extra chromosome present</div>
+            <div class="text-slate-700">Often caused by nondisjunction during meiosis</div>
+          </div>
+
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <div class="font-semibold">How karyotypes are used</div>
+            <ul class="mt-2 space-y-2 text-sm text-slate-700">
+              <li>• detect extra or missing chromosomes</li>
+              <li>• identify sex chromosome patterns</li>
+              <li>• diagnose chromosomal disorders</li>
+              <li>• reveal large deletions, duplications, or translocations</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-7 glass rounded-3xl p-6">
+        <h3 class="text-xl font-bold mb-4">Karyotype reference panels</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div class="rounded-3xl border border-blue-100 bg-white p-4">
+            <div class="h-56 rounded-2xl bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center text-center p-4">
+              <div>
+                <div class="text-5xl mb-2">46,XX</div>
+                <div class="font-semibold text-slate-700">Typical female karyotype</div>
+                <div class="text-sm text-slate-500 mt-1">22 pairs of autosomes + XX</div>
+              </div>
+            </div>
+            <div class="mt-4 text-sm text-slate-700 leading-relaxed">
+              This notation means 46 total chromosomes, with two X sex chromosomes. The chromosomes are paired by size and banding pattern.
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-rose-100 bg-white p-4">
+            <div class="h-56 rounded-2xl bg-gradient-to-br from-rose-100 to-orange-100 flex items-center justify-center text-center p-4">
+              <div>
+                <div class="text-5xl mb-2">47,+21</div>
+                <div class="font-semibold text-slate-700">Trisomy 21 pattern</div>
+                <div class="text-sm text-slate-500 mt-1">Three copies of chromosome 21</div>
+              </div>
+            </div>
+            <div class="mt-4 text-sm text-slate-700 leading-relaxed">
+              Trisomy means one chromosome is present in three copies rather than two. This is often caused by nondisjunction in meiosis.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 3 -->
+  <section id="content3" class="hidden">
+    <div id="cancer" class="section-title glass rounded-3xl p-6 mb-6">
+      <h2 class="text-2xl font-bold mb-3">Cancer, chromosome errors, and packaging</h2>
+      <div class="space-y-4 text-slate-700 leading-relaxed">
+        <p>
+          Cancer cells often show chromosomal instability. This can include aneuploidy, translocations, deletions, duplications, and abnormal chromosome structure.
+        </p>
+        <p>
+          <strong>Aneuploidy</strong> means an abnormal chromosome number. It can arise when chromosomes do not separate correctly during meiosis or mitosis. That mis-separation is called <strong>nondisjunction</strong>.
+        </p>
+        <p>
+          Chromatin packaging also matters in cancer because genes controlling cell division can become misregulated if chromatin is altered or if DNA repair fails.
+        </p>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+          <strong class="text-yellow-800">Important connection:</strong>
+          DNA damage is easier to repair when DNA is more open and accessible. Extremely condensed DNA is harder for repair proteins to access.
+        </div>
+      </div>
+    </div>
+
+    <div class="glass rounded-3xl p-6">
+      <h3 class="text-xl font-bold mb-4">Common chromosome abnormalities</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="abnormalCards"></div>
+    </div>
+  </section>
+
+  <!-- Glossary -->
+  <section id="glossary" class="section-title glass rounded-3xl p-6 mt-6">
+    <h2 class="text-2xl font-bold mb-4">Glossary and answer-help reference</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="glossaryCards"></div>
+  </section>
+
+</main>
+
+<script>
+const packagingLevels = [
+  {
+    title: "1. DNA Double Helix",
+    short: "The basic structure of DNA: two antiparallel strands with complementary bases.",
+    size: "2 nm",
+    details: [
+      "DNA is made of nucleotides. Each nucleotide contains a sugar, phosphate, and nitrogenous base.",
+      "The two strands are antiparallel, meaning one runs 5'→3' and the other runs 3'→5'.",
+      "Bases pair specifically: A with T and G with C.",
+      "This level is where many mutations and UV-induced damages occur, including thymine dimers."
+    ]
+  },
+  {
+    title: "2. Nucleosome",
+    short: "DNA wrapped around histone proteins; often called beads on a string.",
+    size: "11 nm",
+    details: [
+      "About 147 base pairs wrap around a histone octamer.",
+      "Histones are positively charged proteins that help DNA, which is negatively charged, stay tightly packed.",
+      "Nucleosomes make chromatin more compact and also help regulate which genes are accessible.",
+      "This is a major control point for gene expression."
+    ]
+  },
+  {
+    title: "3. 30-nm Chromatin Fiber",
+    short: "Nucleosomes coil together into a thicker fiber for more compact storage.",
+    size: "30 nm",
+    details: [
+      "This level increases packing efficiency.",
+      "Histone H1 helps stabilize the coiling of nucleosomes.",
+      "The exact structure can vary by cell type and experimental conditions, but the idea is more folding and more compaction."
+    ]
+  },
+  {
+    title: "4. Looped Domains",
+    short: "Chromatin loops attach to protein scaffolds and help organize DNA.",
+    size: "~300 nm",
+    details: [
+      "Loops bring regulatory regions and genes into contact.",
+      "This level helps control gene expression and chromosome organization.",
+      "Looping also helps the cell separate chromosomes during division."
+    ]
+  },
+  {
+    title: "5. Metaphase Chromosome",
+    short: "The most condensed form of DNA, visible during mitosis.",
+    size: "~1,400 nm",
+    details: [
+      "This is when DNA is packed enough to be seen under a microscope.",
+      "Each chromosome consists of two sister chromatids joined at the centromere.",
+      "Maximum condensation helps chromosomes separate cleanly during cell division.",
+      "This is the level commonly used in karyotypes."
+    ]
+  },
+  {
+    title: "Key idea: Chromatin vs Chromosome",
+    short: "Chromatin is the looser form; chromosome is the fully condensed form.",
+    size: "Conceptual",
+    details: [
+      "Chromatin is the DNA-protein complex in its more relaxed state, especially during interphase.",
+      "A chromosome is the same material, but tightly condensed, especially during mitosis.",
+      "Relaxed chromatin is more available for transcription and DNA repair."
+    ]
+  }
+];
+
+const glossary = [
+  ["Histone", "Positively charged protein around which DNA wraps to form nucleosomes."],
+  ["Nucleosome", "DNA wrapped around histone proteins; basic unit of chromatin packing."],
+  ["Chromatin", "DNA plus proteins in a less condensed form."],
+  ["Chromosome", "Tightly condensed chromatin, especially visible during cell division."],
+  ["Centromere", "Region where sister chromatids are joined and spindle fibers attach."],
+  ["Sister chromatids", "Two identical copies of a chromosome after DNA replication."],
+  ["Autosome", "Any chromosome that is not a sex chromosome."],
+  ["Sex chromosome", "Chromosomes that determine biological sex in humans, usually X and Y."],
+  ["Karyotype", "An ordered display of chromosomes."],
+  ["Nondisjunction", "Failure of chromosomes to separate properly."],
+  ["Aneuploidy", "Abnormal number of chromosomes."],
+  ["Trisomy", "Three copies of one chromosome instead of two."],
+  ["Monosomy", "Only one copy of a chromosome instead of two."],
+  ["Translocation", "A piece of one chromosome attaches to another chromosome."],
+  ["Deletion", "Loss of a chromosome segment."],
+  ["Duplication", "A chromosome segment is copied more than once."],
+  ["Purine", "A double-ring base: adenine or guanine."],
+  ["Pyrimidine", "A single-ring base: cytosine or thymine."],
+  ["5' to 3'", "Direction in which DNA polymerase builds new DNA."],
+  ["DNA repair", "Cell processes that detect and fix DNA damage."],
+  ["Thymine dimer", "UV-caused bond between adjacent thymine bases."],
+  ["Aneuploidy in cancer", "Common in cancer cells due to chromosome instability."]
+];
+
+const abnormalCards = [
+  {
+    title: "Trisomy",
+    text: "Three copies of a chromosome instead of two. Example: trisomy 21.",
+    color: "bg-amber-50 border-amber-200"
+  },
+  {
+    title: "Monosomy",
+    text: "One chromosome copy is missing. This often causes major developmental problems.",
+    color: "bg-blue-50 border-blue-200"
+  },
+  {
+    title: "Translocation",
+    text: "A piece of one chromosome moves to another chromosome. Can disrupt genes.",
+    color: "bg-rose-50 border-rose-200"
+  },
+  {
+    title: "Deletion / duplication",
+    text: "Segments are missing or repeated, changing gene dosage and function.",
+    color: "bg-emerald-50 border-emerald-200"
+  }
+];
+
+const baseData = [
+  { base: "A", pair: "T", color: "bg-red-500", text: "text-white", note: "Adenine pairs with thymine via 2 hydrogen bonds." },
+  { base: "T", pair: "A", color: "bg-green-500", text: "text-white", note: "Thymine pairs with adenine via 2 hydrogen bonds." },
+  { base: "G", pair: "C", color: "bg-yellow-300", text: "text-slate-900", note: "Guanine pairs with cytosine via 3 hydrogen bonds." },
+  { base: "C", pair: "G", color: "bg-blue-500", text: "text-white", note: "Cytosine pairs with guanine via 3 hydrogen bonds." }
+];
+
+let currentTab = 0;
+let strand = [];
+
+function scrollToId(id){
+  document.getElementById(id).scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function switchTab(n){
+  currentTab = n;
+  for(let i=0;i<4;i++){
+    document.getElementById("content"+i).classList.add("hidden");
+    const tab = document.getElementById("tab"+i);
+    tab.classList.remove("tab-active");
+    tab.classList.add("text-slate-600");
+  }
+  document.getElementById("content"+n).classList.remove("hidden");
+  document.getElementById("tab"+n).classList.add("tab-active");
+  document.getElementById("tab"+n).classList.remove("text-slate-600");
+}
+
+function buildPackagingCards(){
+  const levelsEl = document.getElementById("levels");
+  const tbody = document.getElementById("summaryTable");
+  packagingLevels.forEach((lvl, idx) => {
+    const card = document.createElement("button");
+    card.className = "text-left card-hover glass rounded-2xl p-4 border border-blue-100";
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="text-lg font-bold text-slate-900">\${lvl.title}</div>
+          <div class="text-sm text-slate-600 mt-1">\${lvl.short}</div>
+        </div>
+        <span class="px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">\${lvl.size}</span>
+      </div>
+    `;
+    card.onclick = () => showDetail(idx);
+    levelsEl.appendChild(card);
+
+    const tr = document.createElement("tr");
+    tr.className = "bg-white";
+    tr.innerHTML = `
+      <td class="p-3 border border-blue-100 font-semibold">\${lvl.title}</td>
+      <td class="p-3 border border-blue-100">\${lvl.short}</td>
+      <td class="p-3 border border-blue-100">\${lvl.size}</td>
+      <td class="p-3 border border-blue-100">Increases compaction, organization, and control of gene access</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function showDetail(idx){
+  const lvl = packagingLevels[idx];
+  document.getElementById("detailTitle").textContent = lvl.title;
+  document.getElementById("detailSubtitle").textContent = lvl.size;
+  document.getElementById("detailBody").innerHTML = `
+    <p>\${lvl.short}</p>
+    <ul class="list-disc pl-5 space-y-2">
+      \${lvl.details.map(d => `<li>\${d}</li>`).join("")}
+    </ul>
+    <div class="mt-4 p-4 rounded-2xl bg-blue-50 border border-blue-100">
+      <div class="font-semibold text-blue-800">Why this level matters</div>
+      <div class="text-slate-700 mt-1">
+        \${detailReason(idx)}
+      </div>
+    </div>
+  `;
+}
+
+function detailReason(idx){
+  const reasons = [
+    "The double helix is the actual code. Its sequence stores genetic information, and its structure determines how the cell copies and reads DNA.",
+    "Nucleosomes are the first major packaging step. They shorten DNA and help regulate transcription by controlling access to genes.",
+    "The 30-nm fiber increases compaction even more, helping the cell fit the genome into the nucleus.",
+    "Looped domains organize genes and regulatory elements so the cell can switch genes on and off efficiently.",
+    "Metaphase chromosomes are the final highly condensed form needed for accurate separation during cell division."
+  ];
+  return reasons[idx] || "";
+}
+
+function buildPalette(){
+  const palette = document.getElementById("palette");
+  baseData.forEach(item => {
+    const b = document.createElement("button");
+    b.draggable = true;
+    b.className = `h-16 rounded-2xl \${item.color} \${item.text} text-2xl font-extrabold small-shadow card-hover`;
+    b.textContent = item.base;
+    b.title = item.note;
+    b.ondragstart = (e) => e.dataTransfer.setData("text/plain", item.base);
+    palette.appendChild(b);
+  });
+
+  const area = document.getElementById("builderArea");
+  area.ondragover = (e) => e.preventDefault();
+  area.ondrop = (e) => {
+    e.preventDefault();
+    const base = e.dataTransfer.getData("text/plain");
+    if(!base) return;
+    strand.push(base);
+    renderStrand();
+  };
+}
+
+function renderStrand(){
+  const area = document.getElementById("builderArea");
+  if(strand.length === 0){
+    area.innerHTML = `<div class="w-full text-slate-400 text-center py-24">Drag bases from the palette into this area.</div>`;
+  } else {
+    area.innerHTML = strand.map(b => {
+      const item = baseData.find(x => x.base === b);
+      return `<div class="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl font-extrabold \${item.color} \${item.text} small-shadow">\${b}</div>`;
+    }).join("");
+  }
+
+  const comp = strand.map(b => ({A:"T",T:"A",G:"C",C:"G"}[b])).join("");
+  document.getElementById("strand1").textContent = strand.join("");
+  document.getElementById("strand2").textContent = comp;
+}
+
+function resetBuilder(){
+  strand = [];
+  renderStrand();
+}
+
+function buildGlossary(){
+  const container = document.getElementById("glossaryCards");
+  glossary.forEach(([term, def]) => {
+    const div = document.createElement("div");
+    div.className = "glass rounded-2xl p-4 border border-blue-100 card-hover";
+    div.innerHTML = `
+      <div class="font-bold text-slate-900 mb-1">\${term}</div>
+      <div class="text-sm text-slate-700 leading-relaxed">\${def}</div>
+    `;
+    container.appendChild(div);
+  });
+
+  const abnormal = document.getElementById("abnormalCards");
+  abnormalCards.forEach(card => {
+    const div = document.createElement("div");
+    div.className = `rounded-2xl border p-4 \${card.color} card-hover`;
+    div.innerHTML = `
+      <div class="font-bold text-slate-900 mb-2">\${card.title}</div>
+      <div class="text-sm text-slate-700 leading-relaxed">\${card.text}</div>
+    `;
+    abnormal.appendChild(div);
+  });
+}
+
+const searchableItems = [
+  { title: "Histones", text: "Positively charged proteins DNA wraps around to form nucleosomes." },
+  { title: "Nucleosome", text: "About 147 base pairs of DNA wrapped around a histone octamer." },
+  { title: "Chromatin", text: "DNA plus proteins in a less condensed state." },
+  { title: "Chromosome", text: "Highly condensed chromatin visible during cell division." },
+  { title: "Centromere", text: "Region joining sister chromatids and attachment point for spindle fibers." },
+  { title: "Karyotype", text: "An arranged display of chromosomes used to detect abnormalities." },
+  { title: "Nondisjunction", text: "Failure of homologous chromosomes or sister chromatids to separate correctly." },
+  { title: "Trisomy", text: "Three copies of a chromosome instead of two." },
+  { title: "Aneuploidy", text: "Any abnormal chromosome number." },
+  { title: "Thymine dimer", text: "UV damage that links adjacent thymines together." },
+  { title: "Antiparallel", text: "DNA strands run in opposite directions: 5'→3' and 3'→5'." },
+  { title: "Complementary base pairing", text: "A-T and G-C pairing." },
+  { title: "Repair access", text: "DNA is easier to repair when chromatin is open and accessible." }
+];
+
+function filterReference(){
+  const q = document.getElementById("searchBox").value.toLowerCase().trim();
+  const results = document.getElementById("searchResults");
+  results.innerHTML = "";
+  if(!q){
+    results.innerHTML = `<div class="text-slate-500 text-sm">Type a term to search the lab reference.</div>`;
+    return;
+  }
+  const matches = searchableItems.filter(x =>
+    x.title.toLowerCase().includes(q) || x.text.toLowerCase().includes(q)
+  );
+
+  if(matches.length === 0){
+    results.innerHTML = `<div class="text-slate-500 text-sm">No matches found. Try a different biology term.</div>`;
+    return;
+  }
+
+  matches.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "glass rounded-2xl p-4 border border-blue-100";
+    div.innerHTML = `
+      <div class="font-bold text-slate-900 mb-1">\${m.title}</div>
+      <div class="text-sm text-slate-700 leading-relaxed">\${m.text}</div>
+    `;
+    results.appendChild(div);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  buildPackagingCards();
+  buildPalette();
+  buildGlossary();
+  renderStrand();
+  showDetail(0);
+  filterReference();
+});
+</script>
+
+</body>
+</html>
