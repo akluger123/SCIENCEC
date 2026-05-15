@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Packaging & Karyotypes • Interactive Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #02040a; color: #e0f2fe; }
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+        #canvas { width: 100%; height: 100%; background: #0a0f1f; }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.2); }
+        .level-card { transition: all 0.3s ease; }
+        .level-card:hover { transform: translateY(-6px); box-shadow: 0 25px 50px -12px rgb(0 0 0); }
+        .tab-active { border-bottom: 4px solid #22d3ee; color: #67e8f9; font-weight: 600; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+<header class="glass sticky top-0 z-50 border-b border-cyan-900">
+    <div class="max-w-7xl mx-auto px-8 py-6">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
+            From Double Helix to Chromosome
+        </h1>
+        <p class="text-slate-400 mt-1">Interactive Lab • DNA Packaging, LEGO Builder & Karyotypes</p>
+    </div>
+</header>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+
+    <!-- Tab Navigation -->
+    <div class="flex border-b border-slate-700 mb-8">
+        <button onclick="switchTab(0)" id="tab0" class="tab-active px-8 py-4 text-lg">Packaging Levels</button>
+        <button onclick="switchTab(1)" id="tab1" class="px-8 py-4 text-lg">LEGO DNA Builder</button>
+        <button onclick="switchTab(2)" id="tab2" class="px-8 py-4 text-lg">Karyotype Explorer</button>
+    </div>
+
+    <!-- ====================== TAB 0: PACKAGING ====================== -->
+    <div id="content0">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- 3D Viewer -->
+            <div class="lg:col-span-7">
+                <div class="glass rounded-3xl overflow-hidden shadow-2xl h-[480px] relative">
+                    <div id="canvas"></div>
+                    <div class="absolute top-6 left-6 bg-black/70 text-cyan-300 px-5 py-2.5 rounded-2xl text-sm font-medium" id="model-name">
+                        DNA Double Helix
+                    </div>
+                    <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 bg-black/70 px-4 py-2 rounded-3xl">
+                        <button onclick="showModel(0)" class="px-5 py-2 bg-cyan-500 text-black rounded-2xl text-sm font-semibold">Double Helix</button>
+                        <button onclick="showModel(1)" class="px-5 py-2 bg-slate-700 hover:bg-slate-600 rounded-2xl text-sm">Nucleosome</button>
+                        <button onclick="showModel(2)" class="px-5 py-2 bg-slate-700 hover:bg-slate-600 rounded-2xl text-sm">Chromosome</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Information Panel -->
+            <div class="lg:col-span-5">
+                <div class="glass rounded-3xl h-full flex flex-col">
+                    <div class="p-6 border-b border-slate-700">
+                        <h2 id="info-title" class="text-2xl font-bold">DNA Packaging Hierarchy</h2>
+                        <p id="info-subtitle" class="text-cyan-400">Complete Reference Guide</p>
+                    </div>
+                    <div class="flex-1 p-7 overflow-y-auto text-slate-200 leading-relaxed" id="info-content">
+                        <!-- Filled by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Packaging Hierarchy Cards -->
+        <div class="mt-10">
+            <h3 class="text-cyan-400 text-xl font-semibold mb-5">DNA Packaging Hierarchy (2 meters → 6 μm nucleus)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-5" id="hierarchy-cards"></div>
+        </div>
+    </div>
+
+    <!-- ====================== TAB 1: LEGO BUILDER ====================== -->
+    <div id="content1" class="hidden">
+        <div class="glass rounded-3xl p-8">
+            <h2 class="text-3xl font-bold text-cyan-300 mb-6">🧱 LEGO DNA Double Helix Builder</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                <div class="lg:col-span-8">
+                    <div id="builder-area" 
+                         class="min-h-[420px] border-2 border-dashed border-slate-500 rounded-3xl p-8 flex flex-wrap gap-3 items-start content-start bg-slate-950">
+                        <!-- Bases appear here when dragged -->
+                    </div>
+                    <div class="flex justify-between mt-4 text-sm font-mono">
+                        <div>Strand 1 (5'→3'): <span id="seq1" class="text-emerald-400"></span></div>
+                        <div>Strand 2 (3'→5'): <span id="seq2" class="text-rose-400"></span></div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-4">
+                    <h4 class="font-semibold mb-4 text-slate-300">Drag bases to build your strand:</h4>
+                    <div class="grid grid-cols-2 gap-4" id="palette"></div>
+
+                    <button onclick="resetBuilder()" 
+                            class="mt-8 w-full py-4 bg-red-500/10 hover:bg-red-500/20 border border-red-400 text-red-400 rounded-2xl font-medium">
+                        Reset Builder
+                    </button>
+
+                    <div class="mt-10 text-xs bg-slate-900 p-5 rounded-2xl border border-slate-700">
+                        <strong class="block text-cyan-400 mb-2">Key Concepts Shown:</strong>
+                        <ul class="space-y-2 text-slate-300">
+                            <li>• Complementary base pairing (A-T, G-C)</li>
+                            <li>• Antiparallel strands</li>
+                            <li>• 2 vs 3 hydrogen bonds</li>
+                            <li>• Purines (A,G) are larger than pyrimidines (T,C)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================== TAB 2: KARYOTYPE ====================== -->
+    <div id="content2" class="hidden">
+        <div class="glass rounded-3xl p-10">
+            <h2 class="text-3xl font-bold mb-8">Karyotype Explorer</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div>
+                    <img src="https://picsum.photos/id/1015/600/380" class="rounded-2xl border-2 border-cyan-500" alt="Normal Karyotype">
+                    <p class="text-center mt-4 text-cyan-400 font-medium">Normal Human Karyotype (46,XX)</p>
+                    <p class="text-xs text-slate-400 mt-2 text-center">22 pairs of autosomes + XX sex chromosomes</p>
+                </div>
+                <div>
+                    <img src="https://picsum.photos/id/201/600/380" class="rounded-2xl border-2 border-red-500" alt="Trisomy 21">
+                    <p class="text-center mt-4 text-red-400 font-medium">Trisomy 21 Karyotype (47,XX,+21)</p>
+                    <p class="text-xs text-slate-400 mt-2 text-center">Three copies of chromosome 21 due to nondisjunction during meiosis. Cancer cells often show similar chromosomal abnormalities (aneuploidy, translocations).</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== THREE.JS 3D SETUP ====================
+let scene, camera, renderer, controls;
+let currentModelIndex = 0;
+const models = [];
+
+function init3D() {
+    const container = document.getElementById("canvas");
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0f1f);
+
+    camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(0, 10, 35);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+
+    const light = new THREE.DirectionalLight(0xffffff, 1.2);
+    light.position.set(20, 30, 25);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xaaaaaa, 0.5));
+
+    createDNAHelix();
+    createNucleosome();
+    createChromosome();
+
+    models[0].visible = true;
+    animate();
+}
+
+function createDNAHelix() {
+    const group = new THREE.Group();
+    const backboneMat = new THREE.MeshPhongMaterial({ color: 0x64748b });
+    const baseColors = [0xf43f5e, 0x22c55e, 0xeab308, 0x3b82f6];
+
+    for (let i = 0; i < 40; i++) {
+        const angle = i * 0.4;
+        const y = i * 0.35 - 7;
+
+        const bb1 = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1, 16), backboneMat);
+        const bb2 = bb1.clone();
+        bb1.position.set(Math.cos(angle) * 3, y, Math.sin(angle) * 3);
+        bb2.position.set(Math.cos(angle + Math.PI) * 3, y, Math.sin(angle + Math.PI) * 3);
+        bb1.rotation.x = Math.PI / 2;
+        bb2.rotation.x = Math.PI / 2;
+        group.add(bb1, bb2);
+
+        const base = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.3, 1), 
+            new THREE.MeshPhongMaterial({ color: baseColors[i % 4] }));
+        base.position.set(0, y, 0);
+        base.rotation.y = angle;
+        group.add(base);
+    }
+    scene.add(group);
+    models[0] = group;
+}
+
+function createNucleosome() {
+    const group = new THREE.Group();
+    const core = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.5, 2.5, 5, 32),
+        new THREE.MeshPhongMaterial({ color: 0x475569 })
+    );
+    core.rotation.x = Math.PI / 2;
+    group.add(core);
+
+    const dnaMat = new THREE.MeshPhongMaterial({ color: 0x67e8f9 });
+    for (let i = 0; i < 15; i++) {
+        const torus = new THREE.Mesh(
+            new THREE.TorusGeometry(3.2, 0.4, 16, 64, Math.PI * 0.7),
+            dnaMat
+        );
+        torus.rotation.set(Math.PI/2, i * 0.5, 0);
+        torus.position.y = (i - 7) * 0.4;
+        group.add(torus);
+    }
+    scene.add(group);
+    models[1] = group;
+    group.visible = false;
+}
+
+function createChromosome() {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshPhongMaterial({ color: 0xc026d3 });
+
+    const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1, 14, 8), mat);
+    const arm2 = arm1.clone();
+    arm1.position.x = -2.5; arm2.position.x = 2.5;
+    arm1.rotation.z = 0.3; arm2.rotation.z = -0.3;
+    group.add(arm1, arm2);
+
+    const centromere = new THREE.Mesh(new THREE.SphereGeometry(2, 24, 24), 
+        new THREE.MeshPhongMaterial({ color: 0xf59e0b }));
+    centromere.scale.set(1, 0.6, 1.8);
+    group.add(centromere);
+
+    scene.add(group);
+    models[2] = group;
+    group.visible = false;
+}
+
+function showModel(n) {
+    models.forEach((m, i) => m.visible = i === n);
+    currentModelIndex = n;
+    const names = ["DNA Double Helix", "Nucleosome (Beads on a String)", "Metaphase Chromosome"];
+    document.getElementById("model-name").textContent = names[n];
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+// ==================== HIERARCHY & CONTENT ====================
+const hierarchy = [
+    { lvl: 1, name: "DNA Double Helix", desc: "Antiparallel double helix with complementary base pairing (A-T, G-C).", size: "2 nm", factor: "1×" },
+    { lvl: 2, name: "Nucleosome", desc: "DNA wrapped 1.65 times around histone octamer (147 base pairs). Looks like 'beads on a string'. Histones are essential because they allow tight packaging and regulate gene access.", size: "11 nm", factor: "7×" },
+    { lvl: 3, name: "30-nm Fiber", desc: "Nucleosomes coil into a solenoid structure with histone H1 helping stabilization.", size: "30 nm", factor: "40×" },
+    { lvl: 4, name: "Looped Domains", desc: "Loops attached to a protein scaffold (TADs). Allows distant DNA regions to interact for gene regulation.", size: "~300 nm", factor: "300×" },
+    { lvl: 5, name: "Metaphase Chromosome", desc: "Maximum compaction during mitosis. Two sister chromatids joined at the centromere. Visible under light microscope.", size: "1,400 nm", factor: "10,000×" }
+];
+
+function renderHierarchy() {
+    const container = document.getElementById("hierarchy-cards");
+    hierarchy.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "level-card glass rounded-2xl p-5 cursor-pointer border border-slate-700 hover:border-cyan-400";
+        div.innerHTML = `
+            <div class="text-5xl font-bold text-cyan-400 mb-3">\${item.lvl}</div>
+            <div class="font-semibold text-lg text-white mb-2">\${item.name}</div>
+            <div class="text-sm text-slate-300 mb-4">\${item.desc}</div>
+            <div class="flex justify-between text-xs">
+                <span class="text-cyan-300">\${item.size}</span>
+                <span class="font-mono bg-slate-800 px-3 py-1 rounded-xl">\${item.factor}</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+const contentPages = {
+    packaging: {
+        title: "DNA Packaging Hierarchy",
+        subtitle: "Complete Scientific Explanation",
+        html: `
+            <p class="mb-6">Cells face a major packaging challenge: fitting 2 meters of DNA into a nucleus only 6 micrometers wide. This is achieved through multiple levels of folding with the help of histone proteins.</p>
+            
+            <p><strong>Histones</strong> are positively charged proteins that DNA wraps around. Without histones, DNA would be too long and tangled to fit inside the nucleus or to be properly divided during cell division. A cell without histone production would die.</p>
+            
+            <p class="my-6">Each nucleosome wraps approximately <strong>147 base pairs</strong> of DNA around a histone octamer and is often described as “beads on a string.”</p>
+            
+            <p>DNA is most tightly compacted into visible chromosomes during <strong>metaphase of mitosis</strong>. This maximum compaction is necessary so chromosomes can be cleanly pulled apart into daughter cells without breaking.</p>
+            
+            <div class="bg-emerald-900/30 border border-emerald-400 rounded-2xl p-6 my-8">
+                <strong class="text-emerald-300">Thymine Dimer Location:</strong> UV-induced thymine dimers form at the DNA double helix level (Level 1). For DNA repair enzymes (NER) to access the damage, the DNA must be in a loosely packed chromatin state, not tightly condensed.
+            </div>
+
+            <p><strong>Chromatin vs Chromosome:</strong> They are made of the same material. Chromatin is the relaxed form used in interphase for gene expression. A chromosome is the highly condensed form visible during cell division.</p>
+        `
+    },
+    lego: {
+        title: "LEGO DNA Model Analysis",
+        subtitle: "Understanding Structure and Function",
+        html: `
+            <p><strong>Antiparallel</strong> means one strand runs 5'→3' while its complement runs 3'→5'. In the LEGO model, this is shown by flipping one strand before joining the bases.</p>
+            
+            <p class="my-6">A always pairs with T (2 hydrogen bonds) and G always pairs with C (3 hydrogen bonds). This rule maintains consistent helix width because a purine always pairs with a pyrimidine. If A paired with G, both being purines, the helix would become too wide and distorted.</p>
+            
+            <p>The sugar-phosphate backbone forms the sides of the ladder, and the nitrogenous bases form the rungs. Real DNA has major and minor grooves that a LEGO model cannot accurately show, but the model correctly demonstrates complementary base pairing and antiparallel orientation.</p>
+            
+            <p class="text-xs italic text-slate-400 mt-8">Directionality (5'→3') is critical because DNA polymerase can only add new nucleotides to the 3' end during replication.</p>
+        `
+    }
+};
+
+function loadInfo(page) {
+    const data = contentPages[page] || contentPages.packaging;
+    document.getElementById("info-title").textContent = data.title;
+    document.getElementById("info-subtitle").textContent = data.subtitle;
+    document.getElementById("info-content").innerHTML = data.html;
+}
+
+// ==================== LEGO BUILDER ====================
+let strand = [];
+
+function createPalette() {
+    const palette = document.getElementById("palette");
+    const bases = [
+        {letter: "A", color: "bg-red-500", pair: "T"},
+        {letter: "T", color: "bg-green-500", pair: "A"},
+        {letter: "G", color: "bg-yellow-400", pair: "C"},
+        {letter: "C", color: "bg-blue-500", pair: "G"}
+    ];
+
+    bases.forEach(base => {
+        const el = document.createElement("div");
+        el.className = `h-16 \${base.color} text-4xl font-bold flex items-center justify-center rounded-2xl cursor-grab shadow-md`;
+        el.textContent = base.letter;
+        el.draggable = true;
+        el.ondragstart = (e) => e.dataTransfer.setData("text", base.letter);
+        palette.appendChild(el);
+    });
+}
+
+document.getElementById("builder-area").ondragover = (e) => e.preventDefault();
+document.getElementById("builder-area").ondrop = (e) => {
+    e.preventDefault();
+    const letter = e.dataTransfer.getData("text");
+    strand.push(letter);
+
+    const area = document.getElementById("builder-area");
+    area.innerHTML = strand.map(l => `
+        <div class="w-12 h-12 flex items-center justify-center text-4xl font-bold rounded-2xl shadow-inner
+            \${l==='A' ? 'bg-red-500' : ''}
+            \${l==='T' ? 'bg-green-500' : ''}
+            \${l==='G' ? 'bg-yellow-400 text-black' : ''}
+            \${l==='C' ? 'bg-blue-500' : ''}">
+            \${l}
+        </div>
+    `).join('');
+
+    document.getElementById("seq1").textContent = strand.join("");
+    const comp = strand.map(b => ({A:"T",T:"A",G:"C",C:"G"})[b]).join("");
+    document.getElementById("seq2").textContent = comp;
+};
+
+function resetBuilder() {
+    strand = [];
+    document.getElementById("builder-area").innerHTML = `
+        <div class="h-full flex items-center justify-center text-slate-500 text-center">
+            Drag bases from the palette to start building your DNA strand
+        </div>`;
+    document.getElementById("seq1").textContent = "";
+    document.getElementById("seq2").textContent = "";
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTab(n) {
+    document.getElementById("content0").classList.add("hidden");
+    document.getElementById("content1").classList.add("hidden");
+    document.getElementById("content2").classList.add("hidden");
+    document.getElementById("content" + n).classList.remove("hidden");
+
+    document.querySelectorAll("button[id^='tab']").forEach(btn => btn.classList.remove("tab-active"));
+    document.getElementById("tab" + n).classList.add("tab-active");
+
+    if (n === 0) loadInfo("packaging");
+}
+
+// ==================== START THE LAB ====================
+window.onload = () => {
+    init3D();
+    renderHierarchy();
+    createPalette();
+    loadInfo("packaging");
+    document.getElementById("tab0").classList.add("tab-active");
+};
+</script>
+</body>
+</html>
