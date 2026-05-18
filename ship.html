@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Space Hoop Flyer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .panel {
+            background: rgba(10, 15, 30, 0.7);
+            padding: 15px 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+        #top-left {
+            align-self: flex-start;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #score-display {
+            font-size: 28px;
+            font-weight: 800;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        #target-dist {
+            font-size: 14px;
+            color: #aaa;
+        }
+        #controls {
+            align-self: flex-end;
+            font-size: 14px;
+            text-align: right;
+            line-height: 1.6;
+        }
+        .key {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin: 0 2px;
+            font-family: monospace;
+            font-weight: bold;
+            color: #00ffff;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        #crosshair::before, #crosshair::after {
+            content: '';
+            position: absolute;
+            background: #fff;
+            box-shadow: 0 0 5px #00ffff;
+        }
+        #crosshair::before { top: 14px; left: 0; width: 30px; height: 2px; }
+        #crosshair::after { top: 0; left: 14px; width: 2px; height: 30px; }
+        
+        #speed-lines {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, transparent 50%, rgba(0,255,255,0.05) 100%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div id="top-left" class="panel">
+            <div id="score-display">Score: <span id="score">0</span></div>
+            <div id="target-dist">Distance to Target: <span id="distance">0</span>m</div>
+        </div>
+        <div id="controls" class="panel">
+            <div style="margin-bottom: 8px; color: #fff; font-size: 16px;"><strong>FLIGHT SYSTEMS</strong></div>
+            <div><span class="key">W</span> <span class="key">S</span> Pitch (Nose Up/Down)</div>
+            <div><span class="key">A</span> <span class="key">D</span> Roll (Bank Left/Right)</div>
+            <div><span class="key">Q</span> <span class="key">E</span> Yaw (Rudder Left/Right)</div>
+            <div style="margin-top: 10px;"><span class="key">SHIFT</span> Engine Boost</div>
+            <div style="margin-top: 5px;"><span class="key">R</span> Restart</div>
+        </div>
+    </div>
+    <div id="crosshair"></div>
+    <div id="speed-lines"></div>
+
+    <!-- Load Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        window.onload = function () {
+            // --- SCENE SETUP ---
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x020205, 0.0015);
+
+            const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 5000);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            document.body.appendChild(renderer.domElement);
+
+            // --- LIGHTING ---
+            const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(100, 200, 50);
+            scene.add(dirLight);
+
+            // --- SPACESHIP CONSTRUCTION ---
+            const ship = new THREE.Group();
+
+            // Main Hull
+            const hullGeo = new THREE.ConeGeometry(1.5, 8, 4);
+            hullGeo.rotateX(-Math.PI / 2);
+            hullGeo.rotateZ(Math.PI / 4);
+            const hullMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 });
+            const hull = new THREE.Mesh(hullGeo, hullMat);
+            ship.add(hull);
+
+            // Wings
+            const wingGeo = new THREE.BoxGeometry(10, 0.4, 2.5);
+            wingGeo.translate(0, -0.2, 1.5);
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0x0055ff, metalness: 0.5, roughness: 0.4 });
+            const wings = new THREE.Mesh(wingGeo, wingMat);
+            ship.add(wings);
+
+            // Tail Fin
+            const tailGeo = new THREE.BoxGeometry(0.4, 2.5, 2);
+            tailGeo.translate(0, 1.5, 3);
+            const tailMat = new THREE.MeshStandardMaterial({ color: 0x0055ff, metalness: 0.5, roughness: 0.4 });
+            const tail = new THREE.Mesh(tailGeo, tailMat);
+            ship.add(tail);
+
+            // Engine Glow
+            const engineGeo = new THREE.CylinderGeometry(0.8, 1, 0.5, 16);
+            engineGeo.rotateX(Math.PI / 2);
+            engineGeo.translate(0, 0, 4);
+            const engineMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+            const engine = new THREE.Mesh(engineGeo, engineMat);
+            ship.add(engine);
+
+            const engineLight = new THREE.PointLight(0xff5500, 2, 20);
+            engineLight.position.set(0, 0, 4.5);
+            ship.add(engineLight);
+
+            scene.add(ship);
+
+            // --- ENVIRONMENT: STARFIELD ---
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 6000;
+            const starPos = new Float32Array(starCount * 3);
+            for(let i=0; i<starCount*3; i++) {
+                starPos[i] = (Math.random() - 0.5) * 3000;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 1.5, sizeAttenuation: false, transparent: true, opacity: 0.8 });
+            const stars = new THREE.Points(starGeo, starMat);
+            scene.add(stars);
+
+            // --- HOOP SYSTEM ---
+            const hoops = [];
+            let currentPathPos = new THREE.Vector3(0, 0, -80);
+            let currentPathDir = new THREE.Vector3(0, 0, -1);
+            let score = 0;
+            const HOOP_RADIUS = 18;
+
+            function spawnHoop(isFirst) {
+                const geo = new THREE.TorusGeometry(HOOP_RADIUS, 1.2, 16, 50);
+                const mat = new THREE.MeshStandardMaterial({ 
+                    color: 0x00ffff, 
+                    emissive: 0x004488, 
+                    metalness: 0.8, 
+                    roughness: 0.2,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const mesh = new THREE.Mesh(geo, mat);
+
+                if (!isFirst) {
+                    // Turn path randomly to create a twisting tube
+                    const maxTurn = 0.45;
+                    const euler = new THREE.Euler(
+                        (Math.random() - 0.5) * maxTurn,
+                        (Math.random() - 0.5) * maxTurn,
+                        0
+                    );
+                    currentPathDir.applyEuler(euler).normalize();
+                }
+
+                currentPathPos.add(currentPathDir.clone().multiplyScalar(150));
+                mesh.position.copy(currentPathPos);
+                mesh.lookAt(currentPathPos.clone().add(currentPathDir));
+
+                scene.add(mesh);
+                hoops.push(mesh);
+            }
+
+            // Initial population
+            for(let i = 0; i < 12; i++) {
+                spawnHoop(i === 0);
+            }
+
+            function resetGame() {
+                // Reset score
+                score = 0;
+                document.getElementById('score').innerText = score;
+
+                // Reset ship
+                ship.position.set(0, 0, 0);
+                ship.rotation.set(0, 0, 0);
+
+                // Clear old hoops
+                hoops.forEach(h => scene.remove(h));
+                hoops.length = 0;
+
+                // Reset path generators
+                currentPathPos.set(0, 0, -80);
+                currentPathDir.set(0, 0, -1);
+
+                // Respawn new hoops
+                for(let i = 0; i < 12; i++) {
+                    spawnHoop(i === 0);
+                }
+            }
+
+            // --- CONTROLS & INPUT ---
+            const keys = {};
+            window.addEventListener('keydown', (e) => {
+                keys[e.code] = true;
+                if (e.code === 'KeyR') resetGame();
+            });
+            window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+            const uiScore = document.getElementById('score');
+            const uiDist = document.getElementById('distance');
+            const speedLines = document.getElementById('speed-lines');
+
+            let baseSpeed = 1.2;
+            let currentSpeed = baseSpeed;
+            const boostMultiplier = 2.5;
+
+            // --- GAME LOOP ---
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const delta = clock.getDelta();
+
+                // 1. Handle Input (Flight Dynamics)
+                let pitch = 0;
+                let yaw = 0;
+                let roll = 0;
+                const turnSpeed = 1.5 * delta;
+
+                if (keys['KeyW']) pitch = -turnSpeed;     // Nose Up
+                if (keys['KeyS']) pitch = turnSpeed;      // Nose Down
+                if (keys['KeyA']) roll = turnSpeed * 1.5; // Bank Left
+                if (keys['KeyD']) roll = -turnSpeed * 1.5;// Bank Right
+                if (keys['KeyQ']) yaw = turnSpeed;        // Yaw Left
+                if (keys['KeyE']) yaw = -turnSpeed;       // Yaw Right
+
+                ship.rotateX(pitch);
+                ship.rotateY(yaw);
+                ship.rotateZ(roll);
+
+                // Boost Logic
+                const isBoosting = keys['ShiftLeft'] || keys['ShiftRight'];
+                const targetSpeed = isBoosting ? baseSpeed * boostMultiplier : baseSpeed;
+                currentSpeed += (targetSpeed - currentSpeed) * 0.1; // Smooth acceleration
+                speedLines.style.opacity = isBoosting ? '1' : '0';
+
+                // Engine pulse effect
+                engineLight.intensity = 2 + Math.random() * (isBoosting ? 3 : 1);
+                engine.scale.set(1, 1, isBoosting ? 1.5 : 1);
+
+                ship.translateZ(-currentSpeed);
+
+                // 2. Camera Tracking
+                // Calculate ideal positions behind the ship
+                const idealCamPos = new THREE.Vector3(0, 5, 22).applyMatrix4(ship.matrixWorld);
+                const idealLookAt = new THREE.Vector3(0, 0, -40).applyMatrix4(ship.matrixWorld);
+
+                camera.position.lerp(idealCamPos, 0.1);
+                
+                // Make camera bank with the ship
+                const idealUp = new THREE.Vector3(0, 1, 0).applyQuaternion(ship.quaternion);
+                camera.up.lerp(idealUp, 0.1).normalize();
+                
+                camera.lookAt(idealLookAt);
+
+                // 3. Hoop Logic & Collision
+                if (hoops.length > 0) {
+                    const activeHoop = hoops[0];
+                    
+                    // Visual feedback for active target
+                    activeHoop.material.color.setHex(0xffaa00);
+                    activeHoop.material.emissive.setHex(0xaa4400);
+                    activeHoop.rotation.z += 0.01;
+
+                    const distToTarget = ship.position.distanceTo(activeHoop.position);
+                    uiDist.innerText = Math.floor(distToTarget);
+
+                    // Check if passed through
+                    if (distToTarget < HOOP_RADIUS + 2) {
+                        score += 100;
+                        uiScore.innerText = score;
+                        
+                        // Cleanup old hoop
+                        scene.remove(activeHoop);
+                        hoops.shift();
+                        
+                        // Generate new hoop ahead
+                        spawnHoop(false);
+                    } else if (distToTarget > 600) {
+                        // If player flies completely off-course, help them by resetting target slightly closer
+                        // Or just let them navigate back (space is open).
+                    }
+                }
+
+                // 4. Parallax/Infinite Background illusion
+                // Keep stars roughly around the player
+                stars.position.copy(ship.position);
+                // Rotate stars slowly for extra dynamic feel
+                stars.rotation.y += 0.0005;
+
+                renderer.render(scene, camera);
+            }
+
+            // Handle Window Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Start Loop
+            animate();
+        };
+    </script>
+</body>
+</html>
